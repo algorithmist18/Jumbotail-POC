@@ -19,5 +19,5 @@ from dashboard import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.index, name = 'index') 
+    path('', views.get_asset_location, name = 'get_asset_location') 
 ]
