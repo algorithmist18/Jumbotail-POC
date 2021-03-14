@@ -2,14 +2,45 @@
 <html>
 
 <style type="text/css">
+
+	#form-container {
+
+		margin-left: 50px;
+		margin-right: 50px;
+		border-width: 1px;
+		border-style: solid;
+		width: 250px;
+		float: left;
+		justify-content: center;
+	}
 	
 	#container {
 
 		border-style: solid; 
 		border-width: 1px; 
 		margin-top: 100px;
-		margin-left: 200px;
-		margin-right: 200px;
+		margin-left: 400px;
+		margin-right: 100px;
+	}
+
+	body {
+
+		font-family: 'Open Sans', sans-serif;
+	}
+
+	.input-group {
+
+		margin-left: 15px;
+		margin-right: 15px;
+		margin-top: 10px;
+		margin-bottom: 10px;
+	}
+
+	#submit-button {
+
+		margin-left: 15px;
+		margin-right: 15px;
+		margin-bottom: 10px;
 	}
 
 </style>
@@ -19,6 +50,69 @@
 </head>
 
 <body>
+
+	<!-- Library for jQuery--> 
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+	<!--Google font-->
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+	<div id="form-container">
+		
+		<cemter>
+
+			<div class="input-group">
+			  <span id="asset-label"><strong>Asset type:</strong></span>
+			  <br>
+			  <select class="custom-select" name="assetType" id="asset" onchange="fetchTruckDetails()">
+			    <option value="Truck">Truck</option>
+			    <option value="Salesperson">Salesperson</option>
+			  </select>
+			</div>
+
+			<br>
+
+			<div class="input-group">
+			  <span id="asset-label"><strong>Asset ID:</strong></span>
+			  <br>
+			  <select class="custom-select" name="assetId" id="assetId">
+			  </select>
+			</div>
+
+			<br>
+
+			<div class="input-group">
+			  <span id="asset-label"><strong>Start time:</strong></span>
+			  <br>
+			  <input type="datetime-local" id="startTime" name="startTime">
+			</div>
+
+			<br>
+		
+			<div class="input-group">
+			  <span id="asset-label"><strong>End time:</strong></span>
+			  <br>
+			  <input type="datetime-local" id="endTime" name="endTime" onchange="validateTimes()">
+			  <p><span id="time-message"></span></p>
+			</div>
+
+			<br> 
+
+			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetDetails()">Submit</button>
+
+		</cemter>
+
+	</div>
 
 	<div id="container">
 
@@ -38,17 +132,92 @@
 	
 	// Javascript here
 
-	var assetLocations = "{{assetLocations}}"; 
-	var assetId = "{{assetId}}"; 
+	var assetLocations; 
+	var assetId; 
 
-	// Logging into console - visible on POST call
+	// Fetch asset details
 
-	console.log(assetLocations); 
-	console.log(assetId); 
+	function fetchAssetDetails() {
 
-	for(var i=0; i<assetLocations.length; i++) {
+		assetId = $('#assetId').val(); 
+		var startTime = $('#startTime').val(); 
+		var endTime = $('#endTime').val(); 
 
-		console.log(assetLocations[i]); 
+		$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
+
+			function(data) {
+
+				assetLocations = data['assetLocations']; 
+
+				console.log(assetLocations); 
+			}
+		);
+	}
+
+	// Method to fetch all the truck details 
+
+	function fetchTruckDetails() {
+
+		var assetType = $('#asset').val();
+
+		console.log(assetType); 
+
+		$.get("{% url 'get_asset_IDs' %}", {assetType: assetType},
+
+			function(data) {
+
+				console.log(data['assetIds']); 
+
+				var assetIds = data['assetIds']; 
+
+				// Set the drop down values 
+
+				var dropdown = $('#assetId'); 
+
+				// Clear the dropdown list
+
+				dropdown.empty(); 
+
+				// Add to dropdown 
+
+				$.each(assetIds, function(assetId, assetId) {
+
+					dropdown.append(
+
+						$('<option></option>').val(assetId).html(assetId)
+
+					); 
+
+					console.log(assetId); 
+				});
+			}
+		);
+	}
+
+	// Method to validate the timings (start time should be before end time)
+
+	function validateTimes() {
+
+		var startTime = $('#startTime').val();
+		var endTime = $('#endTime').val(); 
+
+		console.log(startTime, endTime); 
+
+		$.get("{% url 'validate_time' %}", {startTime: startTime, endTime: endTime},
+
+			function(data) {
+
+				console.log(data['valid']); 
+
+				var validTime = $('#time-message'); 
+
+				if(data['valid'] == 'NO') {
+
+					validTime.html(data['message']);
+				} 
+			}
+		); 
+
 	}
 
 </script>

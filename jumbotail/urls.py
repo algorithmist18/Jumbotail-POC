@@ -18,6 +18,10 @@ from django.urls import path
 from dashboard import views 
 
 urlpatterns = [
+
     path('admin/', admin.site.urls),
-    path('', views.get_asset_location, name = 'get_asset_location') 
+    path('', views.homepage, name = 'homepage'),
+    path('assetIds', views.get_asset_IDs, name = 'get_asset_IDs'),
+    path('validatetime', views.validate_times, name = 'validate_time'),
+    path('fetchlocations', views.get_asset_locations, name = 'get_asset_locations') 
 ]

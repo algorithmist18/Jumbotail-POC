@@ -5,56 +5,116 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from .models import Position, Asset, Vehicle, Person
 from .generate_test_data import generate_vehicles, generate_people, generate_positions
+import datetime 
+from django.core import serializers 
 
 # Create your views here.
 
-def index(request): 
+def homepage(request): 
+
+	# Method to fetch list of positions for asset
 
 	return render(request, 'dashboard_page.html')
 
 
-def get_asset_location(request): 
+def get_asset_locations(request): 
 
-	# Method to fetch list of positions for asset 
+	# Method to fetch the locations of asset 
 
-	# Generate testing data 
+	response = {} 
 
-	vehicles = generate_vehicles(3) 
-	people = generate_people(3) 
-	positions = generate_positions(10) 
-
-	# Handle requests 
-
-	if request.method == 'POST': 
+	if request.method == 'GET': 
 
 		# Fetch POST data 
 
-		assetId = request.POST['assetId'] 
-		startTime = request.POST['startTime']
-		endTime = request.POST['endTime'] 
+		assetId = request.GET['assetId'] 
+		startTime = request.GET['startTime']
+		endTime = request.GET['endTime'] 
 
 		# Query DB to fetch asset
-
-		asset = Asset.objects.get(assetRegistrationId = assetId) 
-
-		assetLocations = Position.objects.all().filter(asset = asset, time__lt = endTime, time__gt = startTime) 
-
-		# Logging database elements to console 
-
-		print(Vehicle.objects.all())
-		print(Position.objects.all())
-		print(Person.objects.all())
+		
+		assetLocations = Position.objects.all().filter(assetId = assetId).values()
 
 		# Return data 
 
-		response = {'assetLocations' : assetLocations, 'assetId' : assetId} 
+		response['assetLocations'] = list(assetLocations)
 
-		return render(request, 'dashboard_page.html', response) 
+		return JsonResponse(response) 
+
+	else:
+
+		return JsonResponse(response) 
+
+
+def get_asset_IDs(request): 
+
+	# Method to fetch all the trucks 
+
+	response = {} 
+
+	if request.method == 'GET': 
+
+		assetIds = []
+
+		if request.GET['assetType'] == 'Truck': 
+
+			# Fetch the vehicles (trucks, in this case) 
+
+			vehicles = Vehicle.objects.all() 
+
+			for vehicle in vehicles: 
+
+				assetIds.append(vehicle.vehicleId) 
+		else:
+
+			# Fetch the people  
+
+			people = Person.objects.all() 
+
+			for person in people: 
+
+				assetIds.append(person.personId) 
+
+		response['assetIds'] = assetIds 
+
+		return JsonResponse(response)
 
 	else: 
 
-		print(Vehicle.objects.all())
-		print(Position.objects.all())
-		print(Person.objects.all())
+		return JsonResponse(response) 
 
-		return render(request, 'dashboard_page.html') 
+
+def validate_times(request): 
+
+	# Method to validate start time and end time 
+
+	response = {} 
+
+	if request.method == 'GET': 
+
+		# Fetching data and converting to datetime 
+
+		startTime = datetime.datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
+		endTime = datetime.datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
+
+		# Logging into console 
+
+		print(startTime, endTime)
+
+		# Compare dates 
+
+		if endTime < startTime: 
+
+			response['valid'] = 'NO'
+			response['message'] = 'End time cannot be before start time' 
+
+		else:
+
+			response['valid'] = 'YES'
+			response['message'] = 'Valid time' 
+
+		return JsonResponse(response) 
+
+	else: 
+
+		return JsonResponse(response) 
