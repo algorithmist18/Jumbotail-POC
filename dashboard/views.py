@@ -12,9 +12,31 @@ from django.core import serializers
 
 def homepage(request): 
 
-	# Method to fetch list of positions for asset
+	return render(request, 'dashboard_page.html') 
 
-	return render(request, 'dashboard_page.html')
+
+def get_n_assets(request): 
+
+	# Method to fetch list of positions for N assets
+
+	if request.method == 'GET':
+
+		response = {} 
+		assets = [] 
+
+		n = int(request.GET['noOfAssets']) 
+
+		# Fetch data of 100 assets  
+
+		assetList = list(Asset.objects.all().order_by('-time').values())
+
+		for i in range(min(n, len(assetList))): 
+
+			assets.append(assetList[i]) 
+
+		response['assetsLocations'] = assets
+
+	return JsonResponse(response) 
 
 
 def get_asset_locations(request): 
@@ -32,7 +54,7 @@ def get_asset_locations(request):
 		endTime = request.GET['endTime'] 
 
 		# Query DB to fetch asset
-		
+
 		assetLocations = Position.objects.all().filter(assetId = assetId).values()
 
 		# Return data 
@@ -118,3 +140,62 @@ def validate_times(request):
 	else: 
 
 		return JsonResponse(response) 
+
+
+def save_position(request): 
+
+	# Method to save position data 
+
+	response = {} 
+
+	if request.method == 'POST': 
+
+		# Fetch request data
+
+		assetId = request.POST['assetId']
+		latitude = request.POST['latitude']
+		longitude = request.POST['longitude'] 
+		time = datetime.now() 
+
+		# Check if valid data 
+
+		if Asset.objects.get(assetRegistrationId = assetId) == None: 
+
+			# Not a valid request 
+
+			response['valid'] = False
+			response['statusCode'] = 501
+
+			return JsonResponse(response) 
+
+		else: 
+
+			# Save to Position database 
+
+			position = Position(latitude = latitude, longitude = longitude, assetId = assetId, time = time)  
+			position.save() 
+
+			# Update Asset table 
+
+			asset = Asset.objects.get(assetRegistrationId = assetId) 
+
+			asset.latitude = latitude 
+			asset.longitude = longitude
+			asset.time = time
+
+			asset.save()
+
+			# Update response and return 
+
+			response['valid'] = True
+			response['positionId'] = position.id 
+			response['message'] = 'Position saved successfully' 
+			response['statusCode'] = 201 
+
+			return JsonResponse(response)
+
+	else: 
+
+		response['statusCode'] = 403
+		return JsonResponse(response) 
+

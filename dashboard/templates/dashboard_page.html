@@ -72,6 +72,14 @@
 		<cemter>
 
 			<div class="input-group">
+			  <span id="asset-label"><strong>Number of assets:</strong></span>
+			  <br>
+			  <input type="number" name="noOfAssets" id="noOfAssets" value="100" min="1" onchange="fetchNAssets()">
+			</div>
+
+			<br>
+
+			<div class="input-group">
 			  <span id="asset-label"><strong>Asset type:</strong></span>
 			  <br>
 			  <select class="custom-select" name="assetType" id="asset" onchange="fetchTruckDetails()">
@@ -129,11 +137,28 @@
 </body>
 
 <script type="text/javascript">
-	
+
 	// Javascript here
 
 	var assetLocations; 
 	var assetId; 
+
+	// Fetch N assets 
+
+	function fetchNAssets() {
+
+		var noOfAssets = $('#noOfAssets').val();
+
+		$.get("{% url 'get_n_assets' %}", {noOfAssets: noOfAssets}, 
+
+			function(data) {
+
+				assetsLocations = data['assetsLocations']
+				console.log(assetsLocations); 
+			}
+		);
+
+	}
 
 	// Fetch asset details
 
@@ -148,7 +173,6 @@
 			function(data) {
 
 				assetLocations = data['assetLocations']; 
-
 				console.log(assetLocations); 
 			}
 		);

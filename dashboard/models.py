@@ -1,7 +1,9 @@
 # Importing libraries 
 
+import random
 from django.db import models
 from .utils import generate_vehicle_ID, generate_person_ID, generate_trip_ID, generate_stop_ID, generate_default_asset_ID, generate_default_trip_ID
+import datetime 
 
 # Create your models here.
 
@@ -12,6 +14,12 @@ class Asset(models.Model):
 	assetType = models.TextField(null = False) 
 	assetRegistrationId = models.CharField(null = False, max_length = 10) 
 
+	# For storing latest locations 
+
+	latitude = models.DecimalField(null = False, default = random.uniform(27.20, 27.22), max_digits = 19, decimal_places = 16) 
+	longitude = models.DecimalField(null = False, default = random.uniform(77.49, 77.51), max_digits = 19, decimal_places = 16) 
+
+	time = models.DateTimeField(null = False, default = datetime.datetime.now(), auto_now_add = False) 
 
 class Vehicle(models.Model): 
 
@@ -87,3 +95,4 @@ class Position(models.Model):
 	# Using auto_now_add = True for storing the time when the object is created
 
 	time = models.DateTimeField(auto_now_add = True) 
+
