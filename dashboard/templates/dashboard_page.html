@@ -83,6 +83,7 @@
 			  <span id="asset-label"><strong>Asset type:</strong></span>
 			  <br>
 			  <select class="custom-select" name="assetType" id="asset" onchange="fetchTruckDetails()">
+			  	<option></option>
 			    <option value="Truck">Truck</option>
 			    <option value="Salesperson">Salesperson</option>
 			  </select>
@@ -116,7 +117,7 @@
 
 			<br> 
 
-			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetDetails()">Submit</button>
+			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetLocations()">Submit</button>
 
 		</cemter>
 
@@ -143,6 +144,60 @@
 	var assetLocations; 
 	var assetId; 
 
+	// Test JS methods here 
+
+	var assetId = 'PERVY60VU6'; 
+	fetchLocations24Hrs(assetId);
+	fetchAssetLocationsByTimeInterval("2021-03-20T13:00", "2021-03-21T16:45")
+
+	// Method to convert date to required format 
+
+	function format(dateString) {
+
+		var date = new Date(dateString);
+		var newDate = date.getFullYear() + '-';
+
+		if(date.getMonth() < 9) {
+
+			newDate += '0';
+
+		} 
+
+		newDate += (date.getMonth() + 1) + '-' + date.getDate() + 'T'; 
+
+		if(date.getHours() < 10) {
+
+			newDate += '0'; 
+		}
+
+		newDate += date.getHours() + ':' + date.getMinutes();  
+		return newDate; 
+	}
+
+	// Utility function to get previous day 
+
+	function previousDay(dateString) {
+
+		var date = new Date(dateString);
+		var newDate = date.getFullYear() + '-';
+
+		if(date.getMonth() < 9) {
+
+			newDate += "0"; 
+
+		} 
+
+		newDate += (date.getMonth() + 1) + '-' + date.getDate() + 'T'; 
+
+		if(date.getHours() < 10) {
+
+			newDate += '0'; 
+		}
+
+		newDate += date.getHours() + ':' + date.getMinutes();  
+		return newDate; 
+	}
+
 	// Fetch N assets 
 
 	function fetchNAssets() {
@@ -162,7 +217,7 @@
 
 	// Fetch asset details
 
-	function fetchAssetDetails() {
+	function fetchAssetLocations() {
 
 		assetId = $('#assetId').val(); 
 		var startTime = $('#startTime').val(); 
@@ -242,6 +297,66 @@
 			}
 		); 
 
+	}
+
+	// Method to fetch asset details on giving asset ID 
+
+	function fetchAssetDetails(assetId) {
+
+		// Marker for asset 
+
+		$.get('asset/' + assetId, 
+
+			function(data) {
+
+				console.log(data['valid']); 
+
+				if(data['valid'] == true) {
+
+					console.log(data['asset']); 
+
+				} else {
+
+					// Handle no such asset exception
+				}
+			}
+		);
+	}
+
+	// Method to fetch all asset locations based on time filter 
+
+	function fetchAssetLocationsByTimeInterval(startTime, endTime) {
+
+		// Format for time is 'YYYY-MM-DDTHH:MM' 
+
+		$.get("{% url 'get_asset_locations_by_time' %}", {startTime: startTime, endTime: endTime}, 
+
+			function(data) {
+
+				console.log(data['assets']); 
+			}
+		)
+	}
+
+	// Method to get asset locations in the past 24 hours 
+
+	function fetchLocations24Hrs(assetId) {
+
+		var currentDate = new Date(); 
+		console.log(currentDate);
+		var endTime = format(currentDate);
+		var startTime = previousDay(currentDate); 
+
+		console.log(startTime, endTime); 
+		
+		$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
+
+			function(data) {
+
+				assetLocations = data['assetLocations']; 
+				console.log(assetLocations); 
+			}
+		); 
 	}
 
 </script>

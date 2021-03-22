@@ -1,6 +1,6 @@
 # Importing libraries
 
-import string, random 
+import string, random, datetime
 from .models import Asset, Person, Vehicle, Position, Trip, TripStop
 
 # Global variables for names 
@@ -88,6 +88,10 @@ def generate_positions(num = 100):
 			position = Position(assetId = vehicle.vehicleId, longitude = longitude, latitude = latitude) 
 			position.save()
 
+			# Update asset position 
+
+			asset = Asset.objects.get(assetRegistrationId = vehicle.vehicleId) 
+
 		else: 
 
 			# Fetch a person
@@ -99,6 +103,19 @@ def generate_positions(num = 100):
 
 			position = Position(assetId = person.personId, longitude = longitude, latitude = latitude)
 			position.save() 
+
+			# Update asset position 
+
+			asset = Asset.objects.get(assetRegistrationId = person.personId) 
+
+
+		# Update latest location 
+
+		asset.latitude = latitude
+		asset.longitude = longitude
+		asset.time = datetime.datetime.now() 
+
+		asset.save() 
 
 		positions.append(position) 
 

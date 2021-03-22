@@ -25,5 +25,7 @@ urlpatterns = [
     path('validatetime', views.validate_times, name = 'validate_time'),
     path('fetchlocations', views.get_asset_locations, name = 'get_asset_locations'),
     path('position', views.save_position, name = 'save_position'),
-    path('getnassets', views.get_n_assets, name = 'get_n_assets') 
+    path('getnassets', views.get_n_assets, name = 'get_n_assets'),
+    path('asset/<assetId>', views.get_asset_details, name = 'get_asset_details'),
+    path('assetlocations', views.get_asset_locations_by_time_filter, name = 'get_asset_locations_by_time')
 ]

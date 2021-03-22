@@ -12,6 +12,10 @@ from django.core import serializers
 
 def homepage(request): 
 
+	# Generate new positions 
+
+	# generate_positions(50) 
+
 	return render(request, 'dashboard_page.html') 
 
 
@@ -159,7 +163,7 @@ def save_position(request):
 
 		# Check if valid data 
 
-		if Asset.objects.get(assetRegistrationId = assetId) == None: 
+		if Asset.objects.filter(assetRegistrationId = assetId).exists() == False: 
 
 			# Not a valid request 
 
@@ -198,4 +202,71 @@ def save_position(request):
 
 		response['statusCode'] = 403
 		return JsonResponse(response) 
+
+
+def get_asset_details(request, assetId): 
+
+	# Method to get details of an asset 
+
+	response = {}
+
+	if request.method == 'GET': 
+
+		print('Inside get_asset_details()') 
+
+		try: 
+
+			asset = list(Asset.objects.all().filter(assetRegistrationId = assetId).values())
+
+			response['valid'] = True
+			response['asset'] = asset
+
+		except Asset.DoesNotExist:
+
+			# Invalid asset ID 
+
+			print('Invalid assetID, asset not found')
+			response['valid'] = False
+
+
+		return JsonResponse(response) 
+
+	else: 
+
+		return JsonResponse(response) 
+
+
+
+def get_asset_locations_by_time_filter(request): 
+
+	# Method to get all asset locations in between times 
+
+	response = {} 
+
+	if request.method == 'GET': 
+
+		# Fetching data and converting to datetime 
+
+		print(request.GET['startTime'])
+		print(request.GET['endTime'])
+
+		startTime = datetime.datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
+		endTime = datetime.datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
+
+		# Logging into console 
+
+		print(startTime, endTime)
+
+		# Fetch all assets which fit the constraint 
+
+		assets = list(Asset.objects.all().filter(time__gt = startTime, time__lt = endTime).order_by('-time').values()) 
+
+		response['assets'] = assets 
+
+		return JsonResponse(response) 
+
+	else:
+
+		return JsonResponse(response)  
+
 
