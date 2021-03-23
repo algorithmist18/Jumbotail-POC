@@ -67,6 +67,10 @@
 	<link rel="preconnect" href="https://fonts.gstatic.com">
 	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+	<!--mapbox-->
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script>
+
 	<div id="form-container">
 		
 		<cemter>
@@ -129,7 +133,25 @@
 
 			<h4>Asset dashboard</h4>
 
-			<!-- Google Maps extension here --> 
+			<div id='map' style='width: 600px; height: 550px;'></div>
+
+				<script>
+
+				mapboxgl.accessToken = 'pk.eyJ1IjoibmlzaGFudGg5OCIsImEiOiJja2x1ejBtbzIwaTVjMm5uNnRnczdkNWYzIn0.2FHYECnHm5VyvCpCKJ-01w';
+				
+				var map = new mapboxgl.Map({
+				
+				container: 'map', // container ID
+				
+				style: 'mapbox://styles/mapbox/streets-v11', // style URL
+				
+				center: [79.0882, 21.1458],
+
+        		zoom: 4 // starting zoom
+				
+				});
+
+			</script>
 
 		</center>
 
@@ -144,11 +166,13 @@
 	var assetLocations; 
 	var assetId; 
 
+	var currentMarkers=[];
+
 	// Test JS methods here 
 
-	var assetId = 'PERVY60VU6'; 
-	fetchLocations24Hrs(assetId);
-	fetchAssetLocationsByTimeInterval("2021-03-20T13:00", "2021-03-21T16:45")
+	//var assetId = 'PERVY60VU6'; 
+	//fetchLocations24Hrs(assetId);
+	//fetchAssetLocationsByTimeInterval("2021-03-20T13:00", "2021-03-21T16:45")
 
 	// Method to convert date to required format 
 
@@ -209,6 +233,28 @@
 			function(data) {
 
 				assetsLocations = data['assetsLocations']
+
+				//delete existing markers on map and make empty the array holding those markers
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[]
+				
+				//add markers to map
+				var len_obj = Object.keys(assetsLocations).length
+				for(var i=0;i<len_obj;i++){
+					
+					var marker = new mapboxgl.Marker()
+        			.setLngLat([assetsLocations[i].longitude, assetsLocations[i].latitude])
+        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetsLocations[i].longitude, assetsLocations[i].latitude</p>"))
+					.addTo(map); 
+					
+					//all the markers are noted
+					currentMarkers.push(marker);
+					
+				}
+
 				console.log(assetsLocations); 
 			}
 		);
@@ -228,6 +274,28 @@
 			function(data) {
 
 				assetLocations = data['assetLocations']; 
+				
+				//delete existing markers on map and empty the array holding those markers
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[];
+				
+				//add markers to map
+				var len_obj = Object.keys(assetLocations).length
+				for(var i=0;i<len_obj;i++){
+					
+					var marker = new mapboxgl.Marker()
+        			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
+        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetLocations[i].longitude, assetLocations[i].latitude</p>"))
+					.addTo(map); 
+					
+					//all the markers are noted
+					currentMarkers.push(marker);
+					
+				}
+
 				console.log(assetLocations); 
 			}
 		);
