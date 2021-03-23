@@ -5,16 +5,21 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from .models import Position, Asset, Vehicle, Person
 from .generate_test_data import generate_vehicles, generate_people, generate_positions
-import datetime 
+#import datetime 
 from django.core import serializers 
+from datetime import datetime,timedelta  #Use this instead of import datetime
+
 
 # Create your views here.
 
 def homepage(request): 
 
 	# Generate new positions 
-
-	# generate_positions(50) 
+	# generate_vehicles(50)
+	# generate_people(50)
+	# generate_positions(50)
+	
+	
 
 	return render(request, 'dashboard_page.html') 
 
@@ -34,9 +39,18 @@ def get_n_assets(request):
 
 		assetList = list(Asset.objects.all().order_by('-time').values())
 
+		now = datetime.now()
 		for i in range(min(n, len(assetList))): 
 
-			assets.append(assetList[i]) 
+			
+			#we dont want the data displayed on map to be too old
+			if ( now-timedelta(hours=168) <= assetList[i]['time'] <= now ):  #currently set to 1 week i.e 168hrs
+			
+				assets.append(assetList[i]) 
+
+			else: 
+
+				break 
 
 		response['assetsLocations'] = assets
 
@@ -59,8 +73,8 @@ def get_asset_locations(request):
 
 		# Query DB to fetch asset
 
-		assetLocations = Position.objects.all().filter(assetId = assetId).values()
-
+		assetLocations = Position.objects.all().filter(assetId = assetId,time__range=[startTime,endTime]).values()
+		
 		# Return data 
 
 		response['assetLocations'] = list(assetLocations)
@@ -120,8 +134,8 @@ def validate_times(request):
 
 		# Fetching data and converting to datetime 
 
-		startTime = datetime.datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
-		endTime = datetime.datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
+		startTime = datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
+		endTime = datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
 
 		# Logging into console 
 
@@ -250,8 +264,8 @@ def get_asset_locations_by_time_filter(request):
 		print(request.GET['startTime'])
 		print(request.GET['endTime'])
 
-		startTime = datetime.datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
-		endTime = datetime.datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
+		startTime = datetime.strptime(request.GET['startTime'], "%Y-%m-%dT%H:%M")
+		endTime = datetime.strptime(request.GET['endTime'], "%Y-%m-%dT%H:%M") 
 
 		# Logging into console 
 
