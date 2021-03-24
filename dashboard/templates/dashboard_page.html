@@ -145,9 +145,9 @@
 				
 				style: 'mapbox://styles/mapbox/streets-v11', // style URL
 				
-				center: [79.0882, 21.1458],
+				center: [77.1025, 28.7041],
 
-        		zoom: 4 // starting zoom
+        		zoom: 10 // starting zoom
 				
 				});
 
@@ -167,6 +167,7 @@
 	var assetId; 
 
 	var currentMarkers=[];
+	var currentLatLongs = [];
 
 	// Test JS methods here 
 
@@ -240,6 +241,7 @@
 						currentMarkers[i].remove();
 				}
 				currentMarkers=[]
+				currentLatLongs=[]
 				
 				//add markers to map
 				var len_obj = Object.keys(assetsLocations).length
@@ -247,15 +249,24 @@
 					
 					var marker = new mapboxgl.Marker()
         			.setLngLat([assetsLocations[i].longitude, assetsLocations[i].latitude])
-				//add html for popup here and add 24hrs button there itself
-        			.setPopup(new mapboxgl.Popup().setHTML("<p>Popup html here</p>"))
+        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetsLocations[i].longitude, assetsLocations[i].latitude</p>"))
 					.addTo(map); 
 					
 					//all the markers are noted
 					currentMarkers.push(marker);
+					currentLatLongs.push([assetsLocations[i].longitude, assetsLocations[i].latitude]);
 					
 				}
 
+				//for fit&zoom all markers to map 
+				if(currentLatLongs.length>0){
+					var bounds = new mapboxgl.LngLatBounds();
+					for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50});
+				}
+				
 				console.log(assetsLocations); 
 			}
 		);
@@ -282,6 +293,7 @@
 						currentMarkers[i].remove();
 				}
 				currentMarkers=[];
+				currentLatLongs=[];
 				
 				//add markers to map
 				var len_obj = Object.keys(assetLocations).length
@@ -289,13 +301,22 @@
 					
 					var marker = new mapboxgl.Marker()
         			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
-				//add html for popup here and add 24hrs button there itself
-        			.setPopup(new mapboxgl.Popup().setHTML("<p>Popup html here</p>"))
+        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetLocations[i].longitude, assetLocations[i].latitude</p>"))
 					.addTo(map); 
 					
 					//all the markers are noted
 					currentMarkers.push(marker);
+					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+
 					
+				}
+				//for fit&zoom all markers to map 
+				var bounds = new mapboxgl.LngLatBounds();
+				if(currentLatLongs.length>0){
+					for(var i=0; i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50}); 
 				}
 
 				console.log(assetLocations); 
