@@ -8,25 +8,30 @@ from .generate_test_data import generate_vehicles, generate_people, generate_pos
 #import datetime 
 from django.core import serializers 
 from datetime import datetime,timedelta  #Use this instead of import datetime
-
+from django.db import connection 
+import json 
+from django.core.serializers import serialize
 
 # Create your views here.
 
 def homepage(request): 
 
-	# Generate new positions 
-	# generate_vehicles(50)
-	# generate_people(50)
-	# generate_positions(50)
-	
-	
+	# Generate new positions
 
+	"""
+	generate_vehicles(10)
+	generate_people(10)
+	generate_positions(100)
+	""" 
+	
 	return render(request, 'dashboard_page.html') 
 
 
 def get_n_assets(request): 
 
 	# Method to fetch list of positions for N assets
+
+	assetMapping = {} 
 
 	if request.method == 'GET':
 
@@ -40,12 +45,24 @@ def get_n_assets(request):
 		assetList = list(Asset.objects.all().order_by('-time').values())
 
 		now = datetime.now()
+
 		for i in range(min(n, len(assetList))): 
 
 			
 			#we dont want the data displayed on map to be too old
 			if ( now-timedelta(hours=168) <= assetList[i]['time'] <= now ):  #currently set to 1 week i.e 168hrs
-			
+				
+				if assetList[i]['assetRegistrationId'].startswith('PER'): 
+
+					person = list(Person.objects.filter(personId = assetList[i]['assetRegistrationId']).values())
+					assetMapping[assetList[i]['assetRegistrationId']] = person[0]
+
+				else: 
+
+					vehicle = list(Vehicle.objects.filter(vehicleId = assetList[i]['assetRegistrationId']).values())
+					print(vehicle) 
+					assetMapping[assetList[i]['assetRegistrationId']] = vehicle[0]
+
 				assets.append(assetList[i]) 
 
 			else: 
@@ -53,6 +70,7 @@ def get_n_assets(request):
 				break 
 
 		response['assetsLocations'] = assets
+		response['assetMap'] = assetMapping 
 
 	return JsonResponse(response) 
 
@@ -73,7 +91,7 @@ def get_asset_locations(request):
 
 		# Query DB to fetch asset
 
-		assetLocations = Position.objects.all().filter(assetId = assetId,time__range=[startTime,endTime]).values()
+		assetLocations = Position.objects.all().filter(assetId = assetId, time__range = [startTime,endTime]).values()
 		
 		# Return data 
 
@@ -249,6 +267,48 @@ def get_asset_details(request, assetId):
 
 		return JsonResponse(response) 
 
+
+def get_asset_properties(request, assetId): 
+
+	# Method to get details of an asset 
+
+	response = {}
+
+	if request.method == 'GET': 
+
+		print('Inside get_asset_properties()') 
+
+		try: 
+
+			asset = Asset.objects.get(assetRegistrationId = assetId)
+
+			print(asset)
+
+			if asset.assetType == "Vehicle": 
+
+				vehicle = list(Vehicle.objects.all().filter(vehicleId = assetId).values())
+				response['asset'] = vehicle
+
+			else:
+
+				person = list(Person.objects.all().filter(personId = assetId).values())
+				response['asset'] = person 
+
+			response['valid'] = True
+
+		except Asset.DoesNotExist:
+
+			# Invalid asset ID 
+
+			print('Invalid assetID, asset not found')
+			response['valid'] = False
+
+
+		return JsonResponse(response) 
+
+	else: 
+
+		return JsonResponse(response) 
 
 
 def get_asset_locations_by_time_filter(request): 

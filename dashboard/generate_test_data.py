@@ -48,7 +48,7 @@ def generate_people(num = 10):
 		firstname = first_name[random.randint(0, len(first_name) - 1)]
 		lastname = last_name[random.randint(0, len(last_name) - 1)]
 
-		person = Person(name = firstname + lastname) 
+		person = Person(name = firstname + ' ' + lastname) 
 		person.save() 
 
 		asset = Asset(assetType = 'Person', assetRegistrationId = person.personId) 
@@ -90,7 +90,7 @@ def generate_positions(num = 100):
 
 			# Update asset position 
 
-			asset = Asset.objects.get(assetRegistrationId = vehicle.vehicleId) 
+			asset = Asset.objects.filter(assetRegistrationId = vehicle.vehicleId)[0]
 
 		else: 
 

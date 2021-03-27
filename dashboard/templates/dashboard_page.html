@@ -169,11 +169,22 @@
 	var currentMarkers=[];
 	var currentLatLongs = [];
 
+	var assetMapping = new Map(); 
+
 	// Test JS methods here 
 
 	//var assetId = 'PERVY60VU6'; 
 	//fetchLocations24Hrs(assetId);
 	//fetchAssetLocationsByTimeInterval("2021-03-20T13:00", "2021-03-21T16:45")
+
+	fetchNAssets();
+
+	// Method to round a number to 5 decimal places 
+
+	function round5(numberString) {
+
+		return parseFloat(numberString).toFixed(5); 
+	}
 
 	// Method to convert date to required format 
 
@@ -195,7 +206,7 @@
 			newDate += '0'; 
 		}
 
-		newDate += date.getHours() + ':' + date.getMinutes();  
+		newDate += date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();  
 		return newDate; 
 	}
 
@@ -212,14 +223,14 @@
 
 		} 
 
-		newDate += (date.getMonth() + 1) + '-' + date.getDate() + 'T'; 
+		newDate += (date.getMonth() + 1) + '-' + (date.getDate() - 1) + 'T'; 
 
 		if(date.getHours() < 10) {
 
 			newDate += '0'; 
 		}
 
-		newDate += date.getHours() + ':' + date.getMinutes();  
+		newDate += date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();  
 		return newDate; 
 	}
 
@@ -233,7 +244,9 @@
 
 			function(data) {
 
-				assetsLocations = data['assetsLocations']
+				assetsLocations = data['assetsLocations'];
+
+				var assetMap = data['assetMap']; 
 
 				//delete existing markers on map and make empty the array holding those markers
 				if(currentMarkers!=null){
@@ -246,13 +259,47 @@
 				//add markers to map
 				var len_obj = Object.keys(assetsLocations).length
 				for(var i=0;i<len_obj;i++){
+
+					var assetRegistrationId = assetsLocations[i].assetRegistrationId; 
+
+					// Set DOM elements here to add to marker pop-up 
+
+					var popupdiv = document.createElement('div'); 
+					var btn = document.createElement('button'); 
+					var txt = document.createElement('p'); 
+
+					console.log(assetMap['PERVY60VU6'].name);
+
+					if(assetRegistrationId.startsWith("PER")) {
+
+						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].name + '</b><br>' + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' + 
+						round5(assetsLocations[i].latitude) + '<br>';	
+
+					} else {
+
+						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetMap[assetRegistrationId].company + '<br>' + + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
+							 + round5(assetsLocations[i].latitude) + '<br>';
+					}
 					
+					btn.innerHTML = 'Past 24 hrs'; 
+
+					btn.addEventListener("click", () => {
+
+						fetchLocations24Hrs(assetRegistrationId); 
+					});
+
+					popupdiv.appendChild(txt); 
+					popupdiv.appendChild(btn); 
+
+					// Set up marker and pop-up
+
 					var marker = new mapboxgl.Marker()
         			.setLngLat([assetsLocations[i].longitude, assetsLocations[i].latitude])
-        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetsLocations[i].longitude, assetsLocations[i].latitude</p>"))
+        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
 					.addTo(map); 
-					
+	
 					//all the markers are noted
+
 					currentMarkers.push(marker);
 					currentLatLongs.push([assetsLocations[i].longitude, assetsLocations[i].latitude]);
 					
@@ -299,12 +346,34 @@
 				var len_obj = Object.keys(assetLocations).length
 				for(var i=0;i<len_obj;i++){
 					
+					var assetRegistrationId = assetLocations[i].assetId; 
+					
+					// Set DOM elements here to add to marker pop-up 
+
+					var popupdiv = document.createElement('div'); 
+					var btn = document.createElement('button'); 
+					var txt = document.createElement('p'); 
+
+					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>';
+					btn.innerHTML = 'Past 24 hrs'; 
+
+					btn.addEventListener("click", () => {
+
+						fetchLocations24Hrs(assetRegistrationId); 
+					})
+
+					popupdiv.appendChild(txt); 
+					popupdiv.appendChild(btn); 
+
+					// Set up marker and pop-up 
+
 					var marker = new mapboxgl.Marker()
         			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
-        			.setPopup(new mapboxgl.Popup().setHTML("<p>assetLocations[i].longitude, assetLocations[i].latitude</p>"))
+        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
 					.addTo(map); 
 					
 					//all the markers are noted
+					
 					currentMarkers.push(marker);
 					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
 
@@ -405,6 +474,7 @@
 				if(data['valid'] == true) {
 
 					console.log(data['asset']); 
+					return data['asset']; 
 
 				} else {
 
@@ -412,6 +482,37 @@
 				}
 			}
 		);
+	}
+
+	// Method to fetch asset properties 
+
+	function fetchAssetProperties(assetId) {
+
+		// Marker for asset 
+
+		var assetProperty; 
+
+		$.get('properties/' + assetId, 
+
+			function(data) {
+
+				console.log(data['valid']); 
+
+				if(data['valid'] == true) {
+
+					assetProperty = data['asset']; 
+
+				} else {
+
+					// Handle no such asset exception
+				}
+			}
+		)
+		.done(function() {
+
+			console.log('Asset property', assetProperty);
+			return assetProperty;
+		});
 	}
 
 	// Method to fetch all asset locations based on time filter 
@@ -446,6 +547,8 @@
 
 				assetLocations = data['assetLocations']; 
 				console.log(assetLocations); 
+
+				// Add Mapbox markers here 
 			}
 		); 
 	}
