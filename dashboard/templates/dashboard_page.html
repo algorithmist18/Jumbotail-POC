@@ -260,7 +260,7 @@
 				var len_obj = Object.keys(assetsLocations).length
 				for(var i=0;i<len_obj;i++){
 
-					var assetRegistrationId = assetsLocations[i].assetRegistrationId; 
+					let assetRegistrationId = assetsLocations[i].assetRegistrationId; 
 
 					// Set DOM elements here to add to marker pop-up 
 
@@ -277,7 +277,7 @@
 
 					} else {
 
-						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetMap[assetRegistrationId].company + '<br>' + + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
+						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
 							 + round5(assetsLocations[i].latitude) + '<br>';
 					}
 					
@@ -346,7 +346,7 @@
 				var len_obj = Object.keys(assetLocations).length
 				for(var i=0;i<len_obj;i++){
 					
-					var assetRegistrationId = assetLocations[i].assetId; 
+					let assetRegistrationId = assetLocations[i].assetId; 
 					
 					// Set DOM elements here to add to marker pop-up 
 
@@ -359,7 +359,7 @@
 
 					btn.addEventListener("click", () => {
 
-						fetchLocations24Hrs(assetRegistrationId); 
+						fetchLocations24Hrs(assetLocations[i].assetId); 
 					})
 
 					popupdiv.appendChild(txt); 
@@ -534,8 +534,7 @@
 
 	function fetchLocations24Hrs(assetId) {
 
-		var currentDate = new Date(); 
-		console.log(currentDate);
+		var currentDate = new Date();
 		var endTime = format(currentDate);
 		var startTime = previousDay(currentDate); 
 
