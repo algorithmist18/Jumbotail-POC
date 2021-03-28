@@ -23,7 +23,7 @@ def homepage(request):
 	generate_people(10)
 	generate_positions(100)
 	""" 
-
+	#generate_positions(1000)
 	return render(request, 'dashboard_page.html') 
 
 
@@ -59,7 +59,8 @@ def get_n_assets(request):
 
 				else: 
 
-					vehicle = list(Vehicle.objects.filter(vehicleId = assetList[i]['assetRegistrationId']).values()) 
+					vehicle = list(Vehicle.objects.filter(vehicleId = assetList[i]['assetRegistrationId']).values())
+					print(vehicle) 
 					assetMapping[assetList[i]['assetRegistrationId']] = vehicle[0]
 
 				assets.append(assetList[i]) 
@@ -123,7 +124,7 @@ def get_asset_IDs(request):
 
 				assetIds.append(vehicle.vehicleId) 
 		else:
-+
+
 			# Fetch the people  
 
 			people = Person.objects.all() 
