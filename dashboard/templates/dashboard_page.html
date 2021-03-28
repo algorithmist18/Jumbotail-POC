@@ -173,10 +173,6 @@
 
 	// Test JS methods here 
 
-	//var assetId = 'PERVY60VU6'; 
-	//fetchLocations24Hrs(assetId);
-	//fetchAssetLocationsByTimeInterval("2021-03-20T13:00", "2021-03-21T16:45")
-
 	fetchNAssets();
 
 	// Method to round a number to 5 decimal places 
@@ -248,7 +244,7 @@
 
 				var assetMap = data['assetMap']; 
 
-				//delete existing markers on map and make empty the array holding those markers
+				//delete existing markers on map and empty the array holding those markers
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
@@ -260,7 +256,7 @@
 				var len_obj = Object.keys(assetsLocations).length
 				for(var i=0;i<len_obj;i++){
 
-					let assetRegistrationId = assetsLocations[i].assetRegistrationId; 
+					var assetRegistrationId = assetsLocations[i].assetRegistrationId; 
 
 					// Set DOM elements here to add to marker pop-up 
 
@@ -268,7 +264,7 @@
 					var btn = document.createElement('button'); 
 					var txt = document.createElement('p'); 
 
-					console.log(assetMap['PERVY60VU6'].name);
+					//console.log(assetMap['PERVY60VU6'].name);
 
 					if(assetRegistrationId.startsWith("PER")) {
 
@@ -277,7 +273,7 @@
 
 					} else {
 
-						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
+						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetMap[assetRegistrationId].company + '<br>' +  assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
 							 + round5(assetsLocations[i].latitude) + '<br>';
 					}
 					
@@ -306,7 +302,7 @@
 				}
 
 				//for fit&zoom all markers to map 
-				if(currentLatLongs.length>0){
+				if(currentLatLongs.length>1){
 					var bounds = new mapboxgl.LngLatBounds();
 					for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
@@ -346,24 +342,24 @@
 				var len_obj = Object.keys(assetLocations).length
 				for(var i=0;i<len_obj;i++){
 					
-					let assetRegistrationId = assetLocations[i].assetId; 
+					var assetRegistrationId = assetLocations[i].assetId; 
 					
 					// Set DOM elements here to add to marker pop-up 
 
 					var popupdiv = document.createElement('div'); 
-					var btn = document.createElement('button'); 
+					//var btn = document.createElement('button'); 
 					var txt = document.createElement('p'); 
 
-					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>';
-					btn.innerHTML = 'Past 24 hrs'; 
+					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>' + assetLocations[i].time;
+					//btn.innerHTML = 'Past 24 hrs'; 
 
-					btn.addEventListener("click", () => {
+					{% comment %} btn.addEventListener("click", () => {
 
-						fetchLocations24Hrs(assetLocations[i].assetId); 
-					})
+						fetchLocations24Hrs(assetRegistrationId); 
+					}) {% endcomment %}
 
 					popupdiv.appendChild(txt); 
-					popupdiv.appendChild(btn); 
+					//popupdiv.appendChild(btn); 
 
 					// Set up marker and pop-up 
 
@@ -381,7 +377,7 @@
 				}
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
-				if(currentLatLongs.length>0){
+				if(currentLatLongs.length>1){
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
@@ -534,7 +530,8 @@
 
 	function fetchLocations24Hrs(assetId) {
 
-		var currentDate = new Date();
+		var currentDate = new Date(); 
+		console.log(currentDate);
 		var endTime = format(currentDate);
 		var startTime = previousDay(currentDate); 
 
@@ -545,11 +542,65 @@
 			function(data) {
 
 				assetLocations = data['assetLocations']; 
-				console.log(assetLocations); 
+				
+				//delete existing markers on map and empty the array holding those markers
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[];
+				currentLatLongs=[];
+				
+				//add markers to map
+				var len_obj = Object.keys(assetLocations).length
+				for(var i=0;i<len_obj;i++){
+					
+					var assetRegistrationId = assetLocations[i].assetId; 
+					
+					// Set DOM elements here to add to marker pop-up 
 
-				// Add Mapbox markers here 
+					var popupdiv = document.createElement('div'); 
+					//var btn = document.createElement('button'); 
+					var txt = document.createElement('p'); 
+
+					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>' + assetLocations[i].time;
+					//btn.innerHTML = 'Past 24 hrs'; 
+
+					{% comment %} btn.addEventListener("click", () => {
+
+						fetchLocations24Hrs(assetRegistrationId); 
+					}) {% endcomment %}
+
+					popupdiv.appendChild(txt); 
+					//popupdiv.appendChild(btn); 
+
+					// Set up marker and pop-up 
+
+					var marker = new mapboxgl.Marker()
+        			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
+        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
+					.addTo(map); 
+					
+					//all the markers are noted
+					
+					currentMarkers.push(marker);
+					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+
+					
+				}
+				
+				//for fit&zoom all markers to map 
+				var bounds = new mapboxgl.LngLatBounds();
+				if(currentLatLongs.length>1){
+					for(var i=0; i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50}); 
+				}
+
+				//console.log(assetLocations); 
 			}
-		); 
+		);
 	}
 
 </script>
