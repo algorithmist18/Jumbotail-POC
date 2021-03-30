@@ -23,8 +23,7 @@ def homepage(request):
 	generate_people(10)
 	generate_positions(100)
 	""" 
-	#generate_positions(1000)
-	return render(request, 'dashboard_page.html') 
+	return render(request, 'dashboard_page.html')
 
 
 def get_n_assets(request): 
@@ -316,6 +315,7 @@ def get_asset_locations_by_time_filter(request):
 	# Method to get all asset locations in between times 
 
 	response = {} 
+	assetMapping = {} 
 
 	if request.method == 'GET': 
 
@@ -335,7 +335,22 @@ def get_asset_locations_by_time_filter(request):
 
 		assets = list(Asset.objects.all().filter(time__gt = startTime, time__lt = endTime).order_by('-time').values()) 
 
-		response['assets'] = assets 
+		for i in range(len(assets)): 
+
+			if assets[i]['assetRegistrationId'].startswith('PER'): 
+
+				person = list(Person.objects.filter(personId = assets[i]['assetRegistrationId']).values())
+				assetMapping[assets[i]['assetRegistrationId']] = person[0]
+
+			else: 
+
+				vehicle = list(Vehicle.objects.filter(vehicleId = assets[i]['assetRegistrationId']).values()) 
+				assetMapping[assets[i]['assetRegistrationId']] = vehicle[0]
+
+		# Update response 
+
+		response['assetLocations'] = assets 
+		response['assetMapping'] = assetMapping 
 
 		return JsonResponse(response) 
 
@@ -344,3 +359,23 @@ def get_asset_locations_by_time_filter(request):
 		return JsonResponse(response)  
 
 
+
+def validate_asset_ID(assetId): 
+
+	# Method to check whether asset ID is valid or not 
+
+	if assetId.startswith('PER') == True: 
+
+		if not Person.objects.get(personId = assetId).exists(): 
+
+			return False 
+
+		return True 
+
+	else: 
+
+		if not Vehicle.objects.get(assetId = assetId).exists(): 
+
+			return False 
+
+		return True 

@@ -29,4 +29,5 @@ urlpatterns = [
     path('asset/<assetId>', views.get_asset_details, name = 'get_asset_details'),
     path('assetlocations', views.get_asset_locations_by_time_filter, name = 'get_asset_locations_by_time'),
     path('properties/<assetId>', views.get_asset_properties, name = 'get_asset_properties')
+
 ]

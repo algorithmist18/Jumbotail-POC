@@ -43,6 +43,11 @@
 		margin-bottom: 10px;
 	}
 
+	#fetch-all-asset {
+
+		margin-top: -10px;
+	}
+
 </style>
 
 <head>
@@ -121,7 +126,9 @@
 
 			<br> 
 
-			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetLocations()">Submit</button>
+			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetLocations()">Selected asset</button>
+
+			<button class = "btn btn-success" id="fetch-all-asset" onclick="fetchAssetLocationsByTimeInterval()">All assets</button>
 
 		</cemter>
 
@@ -156,6 +163,8 @@
 		</center>
 
 	</div>
+
+	<a href = "/timefilter">Time filter map</a>
 
 </body>
 
@@ -480,60 +489,38 @@
 		);
 	}
 
-	// Method to fetch asset properties 
-
-	function fetchAssetProperties(assetId) {
-
-		// Marker for asset 
-
-		var assetProperty; 
-
-		$.get('properties/' + assetId, 
-
-			function(data) {
-
-				console.log(data['valid']); 
-
-				if(data['valid'] == true) {
-
-					assetProperty = data['asset']; 
-
-				} else {
-
-					// Handle no such asset exception
-				}
-			}
-		)
-		.done(function() {
-
-			console.log('Asset property', assetProperty);
-			return assetProperty;
-		});
-	}
-
 	// Method to fetch all asset locations based on time filter 
 
-	function fetchAssetLocationsByTimeInterval(startTime, endTime) {
+	function fetchAssetLocationsByTimeInterval() {
 
-		// Format for time is 'YYYY-MM-DDTHH:MM' 
+		// Format for time is 'YYYY-MM-DDTHH:MM'
 
+		let startTime = $('#startTime').val(); 
+		let endTime = $('#endTime').val();
+
+		console.log(startTime, endTime); 
+		
 		$.get("{% url 'get_asset_locations_by_time' %}", {startTime: startTime, endTime: endTime}, 
 
 			function(data) {
 
-				console.log(data['assets']); 
+				assetMapping = data['assetMapping']; 
+				assetLocations = data['assetLocations'];
+
+				// Add markers with required DOM elements 
+
+				console.log(assetLocations); 
 			}
-		)
+		); 
 	}
 
 	// Method to get asset locations in the past 24 hours 
 
 	function fetchLocations24Hrs(assetId) {
 
-		var currentDate = new Date(); 
-		console.log(currentDate);
-		var endTime = format(currentDate);
-		var startTime = previousDay(currentDate); 
+		let currentDate = new Date();
+		let endTime = format(currentDate);
+		let startTime = previousDay(currentDate); 
 
 		console.log(startTime, endTime); 
 		
