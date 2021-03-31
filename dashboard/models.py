@@ -49,6 +49,10 @@ class Trip(models.Model):
 
 	asset = models.ForeignKey(Asset, null = False, default = generate_default_asset_ID, on_delete = models.SET_DEFAULT)  
 
+	# For denoting the status of the trip - STARTED, FINISHED, NOT STARTED (Default) 
+	
+	status = models.CharField(null = False, default = 'NOT STARTED', max_length = 15) 
+
 	# Source details 
 
 	srcLong = models.DecimalField(null = False, max_digits = 19, decimal_places = 16)  

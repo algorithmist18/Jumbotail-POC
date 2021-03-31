@@ -11,6 +11,7 @@ from datetime import datetime,timedelta  #Use this instead of import datetime
 from django.db import connection 
 import json 
 from django.core.serializers import serialize
+from math import sin, cos, asin, radians, sqrt
 
 # Create your views here.
 
@@ -379,3 +380,118 @@ def validate_asset_ID(assetId):
 			return False 
 
 		return True 
+
+
+def start_trip(request): 
+
+	# Method to start a trip 
+
+	response = {} 
+
+	if request.method == 'POST': 
+
+		# Fetch request data 
+
+		srcLong = request.POST['srcLong'] 
+		srcLat = request.POST['srcLat']
+
+		desLong = request.POST['desLong']
+		desLat = request.POST['desLat']
+
+		time = request.POST['time']
+
+		assetId = request.POST['assetId'] 
+
+		# Create new trip 
+
+		if validate_asset_ID(assetId): 
+
+			# Valid request 
+
+			asset = Asset.objects.get(assetRegistrationId = assetId) 
+
+			trip = Trip(asset = asset, status = 'STARTED', srcLong = srcLong, srcLat = srcLat, desLong = desLong, desLat = desLat, time = time) 
+
+			trip.save() 
+
+			response['valid'] = True 
+			response['tripId'] = trip.tripId 
+
+			return JsonResponse(response) 
+
+		else: 
+
+			response['valid'] = False 
+			return JsonResponse(response) 
+
+	else: 
+
+		return JsonResponse(response) 
+
+
+def compare_location(lon1, lat1, lon2, lat2): 
+
+	# Method to compare how much distance is between these locations using haversine formula 
+
+	lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2]) 
+
+	dlon = lon2 - lon1
+	dlat = lat2 - lat1
+
+	a = sin(dlat/2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon2/2) ** 2
+	c = 2 * asin(sqrt(a)) 
+	r = 6371.8
+
+	return c * r 
+
+
+def end_trip(request): 
+
+	# Method to end a trip 
+
+	response = {} 
+	delta = 0.50
+
+	if request.method == 'POST': 
+
+		# Fetch request data 
+
+		locationLon = request.POST['locationLon']
+		locationLat = request.POST['locationLat'] 
+		tripId = request.POST['tripId']
+		time = request.POST['time'] 
+
+		# Check if trip is valid 
+
+		trip = Trip.objects.get(tripId = tripId) 
+
+		if compare_location(locationLon, locationLat, trip.desLon, trip.desLat) <= delta:
+
+			# Acceptable 
+
+			trip.status = 'FINISHED'
+
+			# Compute time difference and edit 
+
+			trip.save() 
+
+			# Populate response 
+
+			response['statusCode'] = 200
+			response['valid'] = True
+			response['tripId'] = tripId 
+
+			return JsonResponse(response) 
+
+		else:
+
+			# Unacceptable 
+
+			response['statusCode'] = 403
+			response['valid'] = False 
+			return JsonResponse(response) 
+
+	else: 
+
+		response['statusCode'] = 405
+		return JsonResponse(response) 
