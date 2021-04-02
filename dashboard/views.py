@@ -24,6 +24,9 @@ def homepage(request):
 	generate_people(10)
 	generate_positions(100)
 	""" 
+
+	generate_positions(10) 
+
 	return render(request, 'dashboard_page.html')
 
 
@@ -80,6 +83,7 @@ def get_asset_locations(request):
 	# Method to fetch the locations of asset 
 
 	response = {} 
+	assetMapping = {} 
 
 	if request.method == 'GET': 
 
@@ -91,11 +95,22 @@ def get_asset_locations(request):
 
 		# Query DB to fetch asset
 
-		assetLocations = Position.objects.all().filter(assetId = assetId, time__range = [startTime,endTime]).values()
+		assetLocations = Position.objects.all().filter(assetId = assetId, time__range = [startTime, endTime]).values()
+
+		if assetId.startswith('PER'): 
+
+			person = list(Person.objects.filter(personId = assetId).values())
+			assetMapping[assetId] = person[0]
+
+		else: 
+
+			vehicle = list(Vehicle.objects.filter(vehicleId = assetId).values()) 
+			assetMapping[assetId] = vehicle[0]
 		
 		# Return data 
 
 		response['assetLocations'] = list(assetLocations)
+		response['assetMapping'] = assetMapping 
 
 		return JsonResponse(response) 
 

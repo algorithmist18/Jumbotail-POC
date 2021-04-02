@@ -303,6 +303,58 @@
 		return newDate; 
 	}
 
+	// Method to add a marker to map 
+
+	function addMarkerToMap(assetMap, assetId, longitude, latitude) {
+		
+		// Set DOM elements here to add to marker pop-up 
+
+		let popupdiv = document.createElement('div'); 
+		let btn = document.createElement('button'); 
+		let txt = document.createElement('p'); 
+
+		// Set up text on pop-up 
+
+		if(assetId.startsWith("PER")) {
+
+			txt.innerHTML = '<b>' + assetMap[assetId].name + '</b><br>' 			
+			+ assetId + '<br>' 
+			+ round5(longitude) + ', ' 
+			+ round5(latitude) + '<br>';	
+
+		} else {
+
+			txt.innerHTML = '<b>' + assetMap[assetId].vehicleName +'</b><br>' 
+			+ assetMap[assetId].company + '<br>'
+			+ assetId + '<br>'
+			+ round5(longitude) + ', ' 
+			+ round5(latitude) + '<br>';
+		}
+		
+		// Add button for 24 hrs surveillance 
+
+		btn.innerHTML = 'Past 24 hrs'; 
+		
+		btn.addEventListener("click", () => {
+
+			fetchLocations24Hrs(assetId); 
+		
+		});
+
+		popupdiv.appendChild(txt); 
+		popupdiv.appendChild(btn); 
+
+		// Set up marker and return 
+
+		var marker = new mapboxgl.Marker()
+        .setLngLat([longitude, latitude])
+        .setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
+		.addTo(map); 
+
+		return marker; 
+
+	}
+
 	// Fetch N assets 
 
 	function fetchNAssets() {
@@ -331,42 +383,10 @@
 
 					var assetRegistrationId = assetsLocations[i].assetRegistrationId; 
 
-					// Set DOM elements here to add to marker pop-up 
+					// Add marker to map 
 
-					let popupdiv = document.createElement('div'); 
-					let btn = document.createElement('button'); 
-					let txt = document.createElement('p'); 
+					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetsLocations[i].longitude, assetsLocations[i].latitude); 
 
-					//console.log(assetMap['PERVY60VU6'].name);
-
-					if(assetRegistrationId.startsWith("PER")) {
-
-						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].name + '</b><br>' + assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' + 
-						round5(assetsLocations[i].latitude) + '<br>';	
-
-					} else {
-
-						txt.innerHTML = '<b>' + assetMap[assetRegistrationId].vehicleName +'</b><br>' + assetMap[assetRegistrationId].company + '<br>' +  assetRegistrationId + '<br>' + round5(assetsLocations[i].longitude) + ', ' 
-							 + round5(assetsLocations[i].latitude) + '<br>';
-					}
-					
-					btn.innerHTML = 'Past 24 hrs'; 
-
-					btn.addEventListener("click", () => {
-
-						fetchLocations24Hrs(assetRegistrationId); 
-					});
-
-					popupdiv.appendChild(txt); 
-					popupdiv.appendChild(btn); 
-
-					// Set up marker and pop-up
-
-					var marker = new mapboxgl.Marker()
-        			.setLngLat([assetsLocations[i].longitude, assetsLocations[i].latitude])
-        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
-					.addTo(map); 
-	
 					//all the markers are noted
 
 					currentMarkers.push(marker);
@@ -402,7 +422,8 @@
 			function(data) {
 
 				assetLocations = data['assetLocations']; 
-				
+				let assetMap = data['assetMapping']; 
+
 				//delete existing markers on map and empty the array holding those markers
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
@@ -415,32 +436,12 @@
 				var len_obj = Object.keys(assetLocations).length
 				for(var i=0;i<len_obj;i++){
 					
-					var assetRegistrationId = assetLocations[i].assetId; 
-					
-					// Set DOM elements here to add to marker pop-up 
+					let assetRegistrationId = assetLocations[i].assetId;
 
-					let popupdiv = document.createElement('div'); 
-					let btn = document.createElement('button'); 
-					let txt = document.createElement('p'); 
+					 // Add marker to map 
 
-					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>' + assetLocations[i].time;
-					btn.innerHTML = 'Past 24 hrs'; 
+					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
 
-					btn.addEventListener("click", () => {
-
-						fetchLocations24Hrs(assetRegistrationId); 
-					});
-
-					popupdiv.appendChild(txt); 
-					popupdiv.appendChild(btn); 
-
-					// Set up marker and pop-up 
-
-					var marker = new mapboxgl.Marker()
-        			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
-        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
-					.addTo(map); 
-					
 					//all the markers are noted
 					
 					currentMarkers.push(marker);
@@ -593,7 +594,8 @@
 			function(data) {
 
 				assetLocations = data['assetLocations']; 
-				
+				let assetMap = data['assetMapping']; 
+
 				//delete existing markers on map and empty the array holding those markers
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
@@ -608,29 +610,9 @@
 					
 					var assetRegistrationId = assetLocations[i].assetId; 
 					
-					// Set DOM elements here to add to marker pop-up 
+					// Add marker to map 
 
-					var popupdiv = document.createElement('div'); 
-					//var btn = document.createElement('button'); 
-					var txt = document.createElement('p'); 
-
-					txt.innerHTML = round5(assetLocations[i].longitude) + ', ' + round5(assetLocations[i].latitude) + '<br>' + assetLocations[i].time;
-					//btn.innerHTML = 'Past 24 hrs'; 
-
-					{% comment %} btn.addEventListener("click", () => {
-
-						fetchLocations24Hrs(assetRegistrationId); 
-					}) {% endcomment %}
-
-					popupdiv.appendChild(txt); 
-					//popupdiv.appendChild(btn); 
-
-					// Set up marker and pop-up 
-
-					var marker = new mapboxgl.Marker()
-        			.setLngLat([assetLocations[i].longitude, assetLocations[i].latitude])
-        			.setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
-					.addTo(map); 
+					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
 					
 					//all the markers are noted
 					
