@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+
+<style type="text/css">
+
+	#container {
+
+		width: 900px;
+		margin-left: 300px;
+		margin-top: 150px;
+	}
+
+</style>
+
+<head>
+	<title>Jumbotail | View trip </title>
+</head>
+
+<body>
+	
+	<!-- Library for jQuery--> 
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+	<!--Google font-->
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+	<!--mapbox-->
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script>
+
+	<div id="container">
+
+		<center>
+
+			<table class="table">
+			  <thead>
+			    <tr>
+			      <th scope="col">Trip ID</th>
+			      <th scope="col">Asset ID</th>
+			      <th scope="col">Status</th>
+			      <th scope="col">Start time</th>
+			      <th scope="col">End time</th>
+			    </tr>
+			  </thead>
+			  <tbody id="trip-details"></tbody>
+			</table>
+
+		</center>
+
+	</div>
+
+</body>
+
+<script type="text/javascript">
+	
+	getAllTrips();
+
+	var tripStatus; 
+
+	function getAllTrips() {
+
+		let trips;
+
+		$.get("{% url 'get_all_trips' %}", function(data) {
+
+			if(data['valid']) {
+
+				trips = data['trips']; 
+
+				let assets = data['assets']; 
+
+				console.log(trips); 	
+
+				const table = document.getElementById('trip-details'); 
+
+				/*
+				if(table != null) {
+
+					console.log("He");
+					table.remove(); 
+				}
+				*/
+
+				console.log(tripStatus); 
+
+				trips.forEach(trip => {
+
+					if(tripStatus == null) {
+
+						let row = table.insertRow(); 
+					
+						let tripId = row.insertCell(0); 
+
+						tripId.innerHTML = "<a href='/viewtrip?tripId=" + trip.tripId + "'>"  + trip.tripId + "</a>"; 
+
+						let assetId = row.insertCell(1); 
+
+						assetId.innerHTML = assets[trip.asset_id].assetRegistrationId;  
+
+						let status = row.insertCell(2); 
+
+						status.innerHTML = trip.status; 
+
+						let startTime = row.insertCell(3); 
+
+						startTime.innerHTML = trip.startTime; 
+
+						let endTime = row.insertCell(4); 
+
+						if(trip.endTime == null) {
+
+							endTime.innerHTML = 'NA'; 
+
+						} else {
+
+							endTime.innerHTML = trip.endTime; 
+						}
+
+					} else {
+
+						if(trip.status == tripStatus) {
+
+							let row = table.insertRow(); 
+					
+							let tripId = row.insertCell(0); 
+
+							tripId.innerHTML = "<a href='/viewtrip?tripId=" + trip.tripId + "'>"  + trip.tripId + "</a>"; 
+
+							let assetId = row.insertCell(1); 
+
+							assetId.innerHTML = assets[trip.asset_id].assetRegistrationId;  
+
+							let status = row.insertCell(2); 
+
+							status.innerHTML = trip.status; 
+
+							let startTime = row.insertCell(3); 
+
+							startTime.innerHTML = trip.startTime; 
+
+							let endTime = row.insertCell(4); 
+
+							if(trip.endTime == null) {
+
+								endTime.innerHTML = 'NA'; 
+
+							} else {
+
+								endTime.innerHTML = trip.endTime; 
+							}	
+						}		
+					}
+					
+				});
+
+			} else {
+
+				// Handle 400-500 issues 
+			}
+		}); 
+	}
+
+</script>
+
+</html>

@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html>
+
+<style type="text/css">
+
+	#container {
+
+		border-style: solid; 
+		border-width: 1px; 
+		margin-top: 100px;
+		float: left;
+		margin-left: 50px;
+	}
+
+	#chart-container {
+
+		float: right;
+		width: 600px;
+		height: 600px;
+		margin-top: 200px;
+		margin-left: 30px;
+		margin-right: 20px;
+	}	
+
+</style>
+
+<head>
+	<title>Jumbotail | View trip </title>
+</head>
+
+<body>
+	
+	<!-- Library for jQuery--> 
+	<script type="text/javascript" src="http://code.jquery.com/jquery-1.7.1.min.js"></script>
+
+	<!-- Latest compiled and minified CSS -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+	<!-- jQuery library -->
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.0/jquery.min.js"></script>
+
+	<!-- Latest compiled JavaScript -->
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+
+	<!--Google font-->
+	<link rel="preconnect" href="https://fonts.gstatic.com">
+	<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+	<!--mapbox-->
+	<link href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css" rel="stylesheet">
+	<script src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+
+	<div id="container">
+
+		<center>
+
+			<h4>Asset dashboard</h4>
+
+			<div id='map' style='width: 600px; height: 550px;'></div>
+
+				<script>
+
+				mapboxgl.accessToken = 'pk.eyJ1IjoibmlzaGFudGg5OCIsImEiOiJja2x1ejBtbzIwaTVjMm5uNnRnczdkNWYzIn0.2FHYECnHm5VyvCpCKJ-01w';
+				
+				var map = new mapboxgl.Map({
+				
+				container: 'map', // container ID
+				
+				style: 'mapbox://styles/mapbox/streets-v11', // style URL
+				
+				center: [77.1025, 28.7041],
+
+        		zoom: 10 // starting zoom
+				
+				});
+
+				</script>
+
+		</center>
+
+	</div>
+
+	 <div id="chart-container">
+		<canvas id="distance-time-chart"></canvas>
+    </div>
+
+</body>
+
+<script type="text/javascript">
+	
+	var currentMarkers=[];
+	var currentLatLongs = [];
+
+	var tripId = "{{tripId}}"; 
+
+	console.log(tripId);
+
+	fetchTripDetails(tripId); 
+
+	// Method to compute time differences in seconds 
+
+	function timeDiff(start, end) {
+
+		return (new Date(end).getTime() - new Date(start).getTime()) / 1000; 
+	}
+
+	// Method to compute distance between two points using Haversine Formula 
+
+	Number.prototype.toRad = function() {
+
+		return this * Math.PI / 180; 
+	}
+
+	function computeDistance(lon1, lat1, lon2, lat2) {
+
+		lon1 = Number(lon1).toRad(); 
+		lat1 = Number(lat1).toRad(); 
+		lon2 = Number(lon2).toRad(); 
+		lat2 = Number(lat2).toRad(); 
+
+		let R = 6371.8; 
+		let dLat = (lat2 - lat1);
+		let dLon = (lon2 - lon1);
+
+		let a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+				Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+		let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+		let d = R * c;  
+
+		return d * 1000; 
+
+	}
+
+	// Method to round a number to 5 decimal places 
+
+	function round5(numberString) {
+
+		return parseFloat(numberString).toFixed(5); 
+	}
+
+	// Method to convert date to required format 
+
+	function format(dateString) {
+
+		var date = new Date(dateString);
+		var newDate = date.getFullYear() + '-';
+
+		if(date.getMonth() < 9) {
+
+			newDate += '0';
+
+		} 
+
+		newDate += (date.getMonth() + 1) + '-';
+
+		if(date.getDate() < 10) {
+
+			newDate += '0' + date.getDate() + 'T'; 
+		
+		} else {
+
+			newDate += date.getDate() + 'T'; 
+		}
+
+		if(date.getHours() < 10) {
+
+			newDate += '0'; 
+		}
+
+		newDate += date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();  
+		return newDate; 
+	}
+
+	// Utility function to get previous day 
+
+	function previousDay(dateString) {
+
+		var date = new Date(dateString);
+		var newDate = date.getFullYear() + '-';
+
+		if(date.getMonth() < 9) {
+
+			newDate += "0"; 
+
+		} 
+
+		if(date.getDate() < 10) {
+
+			if(date.getDate() == '1') {
+
+				newDate += date.getMonth() + '-'; 
+
+				if(date.getMonth() == 2) {
+
+					// Set to 28
+
+					newDate += '28T';
+
+				} else if (date.getMonth() == 1 || date.getMonth() == 3 || date.getMonth() == 5 
+						|| date.getMonth() == 7 || date.getMonth() == 8 || date.getMonth() == 10 
+						|| date.getMonth() == 12) {
+
+
+					newDate += '31T';
+
+				} else {
+
+					newDate += '30T';
+				}
+
+			} else {
+
+				newDate += (date.getMonth() + 1) + '-'; 
+				newDate += '0' + (date.getDate() - 1) + 'T'; 
+			}
+
+		} else {
+
+			newDate += (date.getMonth() + 1) + '-'; 
+			newDate += (date.getDate() - 1) + 'T';
+		}
+
+		if(date.getHours() < 10) {
+
+			newDate += '0'; 
+		}
+
+		newDate += date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();  
+		return newDate; 
+	}
+
+	// Method to add a marker to map 
+
+	function addMarkerToMap(asset, longitude, latitude) {
+		
+		// Set DOM elements here to add to marker pop-up 
+
+		let popupdiv = document.createElement('div'); 
+		let btn = document.createElement('button'); 
+		let txt = document.createElement('p'); 
+
+		// Set up text on pop-up 
+
+		if(asset.vehicleId == null) {
+
+			txt.innerHTML = '<b>' + asset.name + '</b><br>' 			
+			+ asset.personId + '<br>' 
+			+ round5(longitude) + ', ' 
+			+ round5(latitude) + '<br>';	
+
+		} else {
+
+			txt.innerHTML = '<b>' + asset.vehicleName +'</b><br>' 
+			+ asset.company + '<br>'
+			+ asset.vehicleId + '<br>'
+			+ round5(longitude) + ', ' 
+			+ round5(latitude) + '<br>';
+		}
+		
+		// Add button for 24 hrs surveillance 
+
+		btn.innerHTML = 'Past 24 hrs'; 
+		
+		btn.addEventListener("click", () => {
+
+			if(asset.vehicleId == null) {
+
+				fetchLocations24Hrs(asset.personId);
+
+			} else {
+			
+				fetchLocations24Hrs(asset.vehicleId); 
+			}
+		
+		});
+
+		popupdiv.appendChild(txt); 
+		popupdiv.appendChild(btn); 
+
+		// Set up marker and return 
+
+		var marker = new mapboxgl.Marker()
+        .setLngLat([longitude, latitude])
+        .setPopup(new mapboxgl.Popup().setDOMContent(popupdiv))
+		.addTo(map); 
+
+		return marker; 
+
+	}
+
+	// Method to fetch details of trip
+
+	function fetchTripDetails(tripId) {
+
+		$.get("trip/" + tripId, function(data) {
+
+			if(data['valid']) {
+
+				let asset = data['asset']; 
+				let trip = data['trip']; 
+				let positions = data['positions']; 
+				let distances = []; 
+				let time = []; 
+
+				console.log(asset);
+
+
+				let desLon = trip['desLong']; 
+				let desLat = trip['desLat']; 
+
+				console.log(positions); 	
+
+				//delete existing markers on map and empty the array holding those markers
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				
+				currentMarkers=[]
+				currentLatLongs=[]
+
+				positions.forEach(position => {
+
+					let dist = computeDistance(desLon, desLat, position.longitude, position.latitude); 
+
+					console.log(dist); 
+
+					distances.push(dist); 
+					
+					let timeElapsed = timeDiff(trip.startTime, position.time); 
+
+					time.push(timeElapsed); 
+							
+					// Add marker to map 
+
+					let marker = addMarkerToMap(asset, position.longitude, position.latitude); 
+
+					//all the markers are noted
+
+					currentMarkers.push(marker);
+					currentLatLongs.push([position.longitude, position.latitude]);
+
+				}); 
+
+				// Add marker to map 
+
+				let marker = addMarkerToMap(asset, desLon, desLat); 
+
+				//all the markers are noted
+
+				currentMarkers.push(marker);
+				currentLatLongs.push([desLon, desLat]);
+
+				//for fit&zoom all markers to map 
+					
+				if(currentLatLongs.length>1){
+				
+					var bounds = new mapboxgl.LngLatBounds();
+					for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50});
+				}
+
+				console.log(distances); 
+				console.log(time); 
+
+				let graph = []; 
+
+				for(let i=0; i < distances.length; i++) {
+
+					let elem = {y: distances[i], x: time[i]}; 
+
+					graph.push(elem); 
+				}
+
+
+				console.log(graph); 
+
+				var ctx = document.getElementById('distance-time-chart').getContext('2d');
+    			var myChart = new Chart(ctx, {
+            	
+            		type: 'line', 
+            		data: {
+
+            			labels: time,
+            			datasets: [
+            				{
+            					label: 'Distance',
+            					data: distances
+            				}
+            			]
+
+            		}
+
+    			});
+
+			} else {
+
+				// Handle exception 
+			}
+
+		}); 
+	}	
+
+	// Method to get asset locations in the past 24 hours 
+
+	function fetchLocations24Hrs(assetId) {
+
+		let currentDate = new Date();
+		let endTime = format(currentDate);
+		let startTime = previousDay(currentDate); 
+
+		console.log(startTime, endTime); 
+		
+		$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
+
+			function(data) {
+
+				assetLocations = data['assetLocations']; 
+				let assetMap = data['assetMapping']; 
+
+				//delete existing markers on map and empty the array holding those markers
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[];
+				currentLatLongs=[];
+				
+				//add markers to map
+				var len_obj = Object.keys(assetLocations).length
+				for(var i=0;i<len_obj;i++){
+					
+					var assetRegistrationId = assetLocations[i].assetId; 
+					
+					// Add marker to map 
+
+					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
+					
+					//all the markers are noted
+					
+					currentMarkers.push(marker);
+					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+
+					
+				}
+				
+				//for fit&zoom all markers to map 
+				var bounds = new mapboxgl.LngLatBounds();
+				if(currentLatLongs.length>1){
+					for(var i=0; i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50}); 
+				}
+
+				//console.log(assetLocations); 
+			}
+		);
+	}
+
+</script>
+
+</html>

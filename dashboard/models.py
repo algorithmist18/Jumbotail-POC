@@ -63,9 +63,14 @@ class Trip(models.Model):
 	desLong = models.DecimalField(null = False, max_digits = 19, decimal_places = 16) 
 	desLat = models.DecimalField(null = False, max_digits = 19, decimal_places = 16)
 
+	# Start time and end time 
+
+	startTime = models.DateTimeField(null = False, default = datetime.datetime.now()) 
+	endTime = models.DateTimeField(null = True) 
+
 	# Time taken in minutes 
 
-	time = models.DecimalField(null = False, max_digits = 8, decimal_places = 4) 
+	time = models.DecimalField(null = True, max_digits = 12, decimal_places = 4) 
 
 
 class TripStop(models.Model): 

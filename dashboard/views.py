@@ -3,8 +3,8 @@
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
-from .models import Position, Asset, Vehicle, Person
-from .generate_test_data import generate_vehicles, generate_people, generate_positions
+from .models import Position, Asset, Vehicle, Person, Trip
+from .generate_test_data import generate_vehicles, generate_people, generate_positions, generate_trips, generate_trip_positions, end_trips
 #import datetime 
 from django.core import serializers 
 from datetime import datetime,timedelta  #Use this instead of import datetime
@@ -12,6 +12,7 @@ from django.db import connection
 import json 
 from django.core.serializers import serialize
 from math import sin, cos, asin, radians, sqrt
+from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
@@ -23,9 +24,8 @@ def homepage(request):
 	generate_vehicles(10)
 	generate_people(10)
 	generate_positions(100)
-	""" 
-
-	generate_positions(10) 
+	"""
+	generate_positions(5) 
 
 	return render(request, 'dashboard_page.html')
 
@@ -396,7 +396,7 @@ def validate_asset_ID(assetId):
 
 		return True 
 
-
+@csrf_exempt
 def start_trip(request): 
 
 	# Method to start a trip 
@@ -407,15 +407,14 @@ def start_trip(request):
 
 		# Fetch request data 
 
-		srcLong = request.POST['srcLong'] 
-		srcLat = request.POST['srcLat']
+		srcLat = request.POST.get("srcLat")
+		srcLong = request.POST.get('srcLong')
+		desLong = request.POST.get('desLong')
+		desLat = request.POST.get('desLat')
+		time = request.POST.get('startTime')
+		assetId = request.POST.get('assetId')
 
-		desLong = request.POST['desLong']
-		desLat = request.POST['desLat']
-
-		time = request.POST['time']
-
-		assetId = request.POST['assetId'] 
+		print(srcLat, srcLong, desLong, desLat) 
 
 		# Create new trip 
 
@@ -425,7 +424,7 @@ def start_trip(request):
 
 			asset = Asset.objects.get(assetRegistrationId = assetId) 
 
-			trip = Trip(asset = asset, status = 'STARTED', srcLong = srcLong, srcLat = srcLat, desLong = desLong, desLat = desLat, time = time) 
+			trip = Trip(asset = asset, status = 'STARTED', srcLong = srcLong, srcLat = srcLat, desLong = desLong, desLat = desLat, startTime = time) 
 
 			trip.save() 
 
@@ -459,7 +458,7 @@ def compare_location(lon1, lat1, lon2, lat2):
 
 	return c * r 
 
-
+@csrf_exempt
 def end_trip(request): 
 
 	# Method to end a trip 
@@ -474,7 +473,7 @@ def end_trip(request):
 		locationLon = request.POST['locationLon']
 		locationLat = request.POST['locationLat'] 
 		tripId = request.POST['tripId']
-		time = request.POST['time'] 
+		endTime = request.POST['time'] 
 
 		# Check if trip is valid 
 
@@ -485,6 +484,7 @@ def end_trip(request):
 			# Acceptable 
 
 			trip.status = 'FINISHED'
+			trip.endTime = endTime
 
 			# Compute time difference and edit 
 
@@ -510,3 +510,175 @@ def end_trip(request):
 
 		response['statusCode'] = 405
 		return JsonResponse(response) 
+
+
+# Trip related methods start here 
+
+def trip_view(request): 
+
+	# Method to render trip page 
+
+	print('Inside trip_view()') 
+
+	if request.method == 'GET': 
+
+		tripId = request.GET['tripId'] 
+
+		print(tripId) 
+
+		return render(request, 'trip_view.html', {'tripId' : tripId}) 
+
+	else:
+
+		return render(request, 'trip_view.html', {'tripId' : '0'}) 
+
+
+def trips_view(request): 
+
+	# Method to view all trips in a table
+
+	return render(request, 'trips_monitor.html')
+
+
+def get_all_trips(request): 
+
+	# Method to get all trips 
+
+	response = {} 
+	assets = {} 
+
+	if request.method == 'GET': 
+
+		trips = list(Trip.objects.all().values()) 
+		
+		for i in range(len(trips)): 
+
+			asset = list(Asset.objects.filter(id = trips[i]['asset_id']).values())[0]  
+			assets[trips[i]['asset_id']] = asset 
+
+		print(trips) 
+
+		response['trips'] = trips
+		response['assets'] = assets
+		response['valid'] = True
+		response['statusCode'] = 200 
+
+		return JsonResponse(response) 
+
+	else:
+
+		response['valid'] = False
+		response['statusCode'] = 403 
+
+		return JsonResponse(response) 
+
+
+def get_active_trips(request): 
+
+	# Method to fetch the list of active trips 
+
+	response = {} 
+	assets = {} 
+
+	if request.method == 'GET': 
+
+		trips = list(Trip.objects.filter(status = 'STARTED').values()) 
+
+		for i in range(len(trips)): 
+
+			asset = list(Asset.objects.filter(id = trips[i]['asset_id']).values())[0]  
+			assets[trips[i]['asset_id']] = asset 
+
+		print(trips) 
+
+		response['trips'] = trips
+		response['assets'] = assets
+		response['valid'] = True
+		response['statusCode'] = 200 
+
+		return JsonResponse(response) 
+
+	else:
+
+		response['valid'] = False
+		response['statusCode'] = 403 
+
+		return JsonResponse(response) 
+
+
+def get_trip(request, assetId): 
+
+	# Method to fetch the trip which this asset is taking 
+
+	response = {} 
+
+	if request.method == 'GET': 
+
+		if validate_asset_ID(assetId):
+
+			trip = list(Trip.objects.filter(status = 'STARTED', asset__assetRegistrationId = assetId).values())
+
+			response['trip'] = trip 
+			response['statusCode'] = 200 
+			response['valid'] = True 
+
+		else: 
+
+			response['valid'] = False 
+
+		return JsonResponse(response) 
+
+	else: 
+
+		response['valid'] = False
+		response['statusCode'] = 403 
+
+		return JsonResponse(response)  
+
+
+def get_trip_details(request, tripId): 
+
+	# Method to fetch details of the trip 
+
+	response = {} 
+
+	if request.method == 'GET': 
+
+		trip = list(Trip.objects.filter(tripId = tripId).values())[0]
+
+		asset = Asset.objects.get(id = trip['asset_id'])
+
+		# Fetch list of positions that the asset has taken 
+
+		if trip['status'] == 'STARTED': 
+
+			trip_positions = list(Position.objects.filter(assetId = asset.assetRegistrationId, time__gt = trip['startTime']).values())
+
+		else:
+		
+			trip_positions = list(Position.objects.filter(assetId = asset.assetRegistrationId, time__range = [trip['startTime'], trip['endTime']]).values())
+
+		if asset.assetType == "Person": 
+
+			person = list(Person.objects.all().filter(personId = asset.assetRegistrationId).values())
+			response['asset'] = person[0]
+
+		else: 	
+
+			vehicle = list(Vehicle.objects.all().filter(vehicleId = asset.assetRegistrationId).values())
+			response['asset'] = vehicle[0]
+
+		# Set up response 
+
+		response['trip'] = trip 
+		response['positions'] = trip_positions
+		response['valid'] = True
+
+		return JsonResponse(response) 
+
+	else: 
+
+		return JsonResponse(response) 
+
+
+

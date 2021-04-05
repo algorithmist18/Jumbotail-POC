@@ -120,3 +120,91 @@ def generate_positions(num = 100):
 		positions.append(position) 
 
 	return positions
+
+
+def generate_trips(num): 
+
+	noOfVehicles = len(Vehicle.objects.all())
+	noOfPeople = len(Person.objects.all()) 
+
+	positions = [] 
+
+	for i in range(num): 
+
+		# Generate truck and person alternately 
+
+		if i % 2 == 0: 
+
+			# Fetch a vehicle
+
+			vehicle = Vehicle.objects.all()[random.randint(0, noOfVehicles - 1)]
+
+			srcLat = random.uniform(27.20, 27.22)
+			srcLon = random.uniform(77.49, 77.51)
+			desLat = random.uniform(27.20, 27.22) 
+			desLon = random.uniform(77.49, 77.51) 
+
+			asset = Asset.objects.filter(assetRegistrationId = vehicle.vehicleId)[0]
+
+			trip = Trip(srcLong = srcLon, srcLat = srcLat, desLat = desLat, desLong = desLon, asset = asset, startTime = datetime.datetime.now(), status = 'STARTED') 
+			trip.save() 
+
+			position = Position(assetId = vehicle.vehicleId, longitude = srcLon, latitude = srcLat)
+			position.save() 
+
+		else: 
+
+			# Fetch a person
+
+			person = Person.objects.all()[random.randint(0, noOfPeople - 1)]
+
+			srcLat = random.uniform(27.20, 27.22)
+			srcLon = random.uniform(77.49, 77.51)
+			desLat = random.uniform(27.20, 27.22) 
+			desLon = random.uniform(77.49, 77.51) 
+
+			asset = Asset.objects.filter(assetRegistrationId = person.personId)[0]
+			
+			trip = Trip(srcLong = srcLon, srcLat = srcLat, desLat = desLat, desLong = desLon, asset = asset, startTime = datetime.datetime.now(), status = 'STARTED') 
+			trip.save() 
+
+			position = Position(assetId = person.personId, longitude = srcLon, latitude = srcLat)
+			position.save() 
+
+		# Update latest location 
+
+		asset.latitude = srcLat
+		asset.longitude = srcLon
+		asset.time = datetime.datetime.now() 
+
+		asset.save() 
+
+def end_trips(): 
+
+	trips = list(Trip.objects.filter(status = 'STARTED'))  
+
+	for trip in trips: 
+
+		trip.status = 'FINISHED'
+		trip.endTime = datetime.datetime.now() 
+		print(round((datetime.datetime.now() - trip.startTime).total_seconds(), 4))
+		trip.time = round((datetime.datetime.now() - trip.startTime).total_seconds(), 4) 
+		print(round((datetime.datetime.now() - trip.startTime).total_seconds(), 4))
+		trip.save() 
+
+
+def generate_trip_positions():
+
+	trips = list(Trip.objects.all().filter(status = 'STARTED').values())
+
+	for i in range(len(trips)): 
+
+		asset = list(Asset.objects.filter(id = trips[i]['asset_id']).values())[0] 
+
+		for i in range(4): 
+
+			position = Position(assetId = asset['assetRegistrationId'], latitude = random.uniform(27.20, 27.22), longitude = random.uniform(77.49, 77.51)) 
+			position.save() 
+
+
+

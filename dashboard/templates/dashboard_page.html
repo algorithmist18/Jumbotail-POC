@@ -164,7 +164,7 @@
 
 	</div>
 
-	<a href = "/timefilter">Time filter map</a>
+	<a href="/viewtrips">View trips</a>
 
 </body>
 
@@ -193,15 +193,21 @@
 
 	function computeDistance(lon1, lat1, lon2, lat2) {
 
-		let R = 6371.8; 
-		let dlat = (lat2 - lat1).toRad(); 
-		let dlon = (lon2 - lon1).toRad();
+		lon1 = Number(lon1).toRad(); 
+		lat1 = Number(lat1).toRad(); 
+		lon2 = Number(lon2).toRad(); 
+		lat2 = Number(lat2).toRad(); 
 
-		let a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1.toRad()) * Math.cos(lat2.toRad()) * Math.sin(dLon/2) * Math.sin(dLon/2); 
+		let R = 6371.8; 
+		let dLat = (lat2 - lat1).toRad(); 
+		let dLon = (lon2 - lon1).toRad();
+
+		let a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+				Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon/2) * Math.sin(dLon/2); 
 		let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
 		let d = R * c;  
 
-		return d; 
+		return d * 1000; 
 
 	}
 
@@ -572,9 +578,46 @@
 				assetMapping = data['assetMapping']; 
 				assetLocations = data['assetLocations'];
 
-				// Add markers with required DOM elements 
+				//delete existing markers on map and empty the array holding those markers
 
-				console.log(assetLocations); 
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+
+				currentMarkers=[]
+				currentLatLongs=[]
+				
+				//add markers to map
+
+				var len_obj = Object.keys(assetLocations).length; 
+				
+				for(var i=0;i<len_obj;i++) {
+
+					var assetRegistrationId = assetLocations[i].assetRegistrationId; 
+
+					// Add marker to map 
+
+					let marker = addMarkerToMap(assetMapping, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
+
+					//all the markers are noted
+
+					currentMarkers.push(marker);
+					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+					
+				}
+
+				//for fit&zoom all markers to map 
+				
+				if(currentLatLongs.length>1){
+				
+					var bounds = new mapboxgl.LngLatBounds();
+				
+					for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
+						bounds.extend(currentLatLongs[i]); 
+
+					map.fitBounds(bounds, {padding :50});
+				}
 			}
 		); 
 	}

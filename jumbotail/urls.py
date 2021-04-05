@@ -28,6 +28,14 @@ urlpatterns = [
     path('getnassets', views.get_n_assets, name = 'get_n_assets'),
     path('asset/<assetId>', views.get_asset_details, name = 'get_asset_details'),
     path('assetlocations', views.get_asset_locations_by_time_filter, name = 'get_asset_locations_by_time'),
-    path('properties/<assetId>', views.get_asset_properties, name = 'get_asset_properties')
+    path('properties/<assetId>', views.get_asset_properties, name = 'get_asset_properties'),
+    path('activetrips', views.get_active_trips, name = 'get_active_trips'),
+    path('trip/asset/<assetId>', views.get_trip, name = 'get_trip_by_asset'),
+    path('trip/<tripId>', views.get_trip_details, name = 'get_trip_details'),
+    path('viewtrip', views.trip_view, name = 'view_trip'),
+    path('trips', views.get_all_trips, name = 'get_all_trips'),
+    path('viewtrips', views.trips_view, name = 'view_trips'),
+    path('starttrip', views.start_trip, name = 'start_trip'),
+    path('endttrip', views.end_trip, name = 'end_trip') 
 
 ]
