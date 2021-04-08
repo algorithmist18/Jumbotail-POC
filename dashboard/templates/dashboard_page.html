@@ -76,6 +76,9 @@
 	<link href="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.css" rel="stylesheet">
 	<script src="https://api.mapbox.com/mapbox-gl-js/v2.1.1/mapbox-gl.js"></script>
 
+	<!--turf-->
+	<script src='https://unpkg.com/@turf/turf@6.3.0/turf.min.js'></script>
+
 	<div id="form-container">
 		
 		<cemter>
@@ -361,6 +364,33 @@
 
 	}
 
+	function joinMarkers(currentLatLongs){
+						
+		var linestring = turf.lineString(currentLatLongs);
+		if (map.getLayer('route')) {
+  			map.removeLayer('route');
+		}
+		if (map.getSource('route')) {
+ 			map.removeSource('route');
+		}
+    	map.addLayer({
+        	"id": "route",
+        	"type": "line",
+        	"source": {
+            "type": "geojson",
+            "data": linestring
+        	},
+        	'layout': {
+				'line-join': 'round',
+				'line-cap': 'round'
+			},
+			'paint': {
+				'line-color': '#BF93E4',
+				'line-width': 5
+			}
+		});
+	}
+
 	// Fetch N assets 
 
 	function fetchNAssets() {
@@ -458,6 +488,9 @@
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
 				if(currentLatLongs.length>1){
+
+					joinMarkers(currentLatLongs);
+	
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
@@ -668,6 +701,7 @@
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
 				if(currentLatLongs.length>1){
+					joinMarkers(currentLatLongs);
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
