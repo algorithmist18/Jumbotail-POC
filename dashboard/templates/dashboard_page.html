@@ -106,7 +106,7 @@
 			<div class="input-group">
 			  <span id="asset-label"><strong>Asset ID:</strong></span>
 			  <br>
-			  <select class="custom-select" name="assetId" id="assetId">
+			  <select class="custom-select" name="assetId" id="assetId" onchange="fetchAssetLive()">
 			  </select>
 			</div>
 
@@ -391,6 +391,36 @@
 		});
 	}
 
+	function fetchAssetLive(){
+
+		var Assetid = $('#assetId').val();
+
+		$.get("{% url 'get_asset_live' %}", {Assetid: Assetid}, 
+
+			function(data) {
+
+				assetLocation = data['assetLocation'];
+
+				var assetMap = data['assetMap']; 
+
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[]
+				currentLatLongs=[]
+				
+	
+				var assetRegistrationId = assetLocation[0].assetRegistrationId; 
+				let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocation[0].longitude, assetLocation[0].latitude); 
+				currentMarkers.push(marker);
+				currentLatLongs.push([assetLocation[0].longitude, assetLocation[0].latitude]);
+				console.log(assetLocation); 
+			}
+		);
+
+
+	}
 	// Fetch N assets 
 
 	function fetchNAssets() {
