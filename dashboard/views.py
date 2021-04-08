@@ -25,9 +25,43 @@ def homepage(request):
 	generate_people(10)
 	generate_positions(100)
 	"""
-	generate_positions(5) 
+	#generate_positions(5) 
 
 	return render(request, 'dashboard_page.html')
+
+def get_asset_live(request):
+
+	assetMapping = {}
+
+	if request.method == 'GET':
+
+		response ={}
+		asset = []
+
+		assetId = request.GET['Assetid']
+		
+		assetData = list(Asset.objects.all().filter(assetRegistrationId = assetId).values())
+
+		now = datetime.now()
+
+		if ( now-timedelta(hours=168) <= assetData[0]['time'] <= now ):
+
+			if assetData[0]['assetRegistrationId'].startswith('PER'): 
+
+				person = list(Person.objects.filter(personId = assetData[0]['assetRegistrationId']).values())
+				assetMapping[assetData[0]['assetRegistrationId']] = person[0]
+
+			else: 
+
+				vehicle = list(Vehicle.objects.filter(vehicleId = assetData[0]['assetRegistrationId']).values())
+				assetMapping[assetData[0]['assetRegistrationId']] = vehicle[0]
+
+			asset.append(assetData[0])
+		
+		response['assetLocation'] = asset
+		response['assetMap'] = assetMapping 
+
+	return JsonResponse(response) 
 
 
 def get_n_assets(request): 
@@ -191,6 +225,8 @@ def validate_times(request):
 	else: 
 
 		return JsonResponse(response) 
+
+
 
 
 def save_position(request): 
