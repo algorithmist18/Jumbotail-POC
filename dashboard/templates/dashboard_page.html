@@ -7,8 +7,6 @@
 
 		margin-left: 50px;
 		margin-right: 50px;
-		border-width: 1px;
-		border-style: solid;
 		width: 250px;
 		float: left;
 		justify-content: center;
@@ -21,6 +19,20 @@
 		margin-left: 400px;
 		margin-right: 100px;
 	}
+
+	#asset-live {
+
+		border-style: solid;
+		border-width: 1px;
+	}
+
+	#timeline-view {
+
+		margin-top: 30px;
+		border-style: solid;
+		border-width: 1px;
+	}
+
 
 	body {
 
@@ -41,6 +53,14 @@
 		margin-right: 15px;
 		margin-bottom: 10px;
 	}
+
+	#asset-live-button {
+
+		margin-left: 15px;
+		margin-right: 15px;
+		margin-bottom: 10px;
+	}
+
 
 	#fetch-all-asset {
 
@@ -91,6 +111,8 @@
 		
 		<cemter>
 
+			<div id="asset-live">
+
 			<div class="input-group">
 			  <span id="asset-label"><strong>Number of assets:</strong></span>
 			  <br>
@@ -114,32 +136,40 @@
 			<div class="input-group">
 			  <span id="asset-label"><strong>Asset ID:</strong></span>
 			  <br>
-			  <select class="custom-select" name="assetId" id="assetId" onchange="fetchAssetLive()">
+			  <select class="custom-select" name="assetId" id="assetId">
 			  </select>
 			</div>
 
 			<br>
 
-			<div class="input-group">
-			  <span id="asset-label"><strong>Start time:</strong></span>
-			  <br>
-			  <input type="datetime-local" id="startTime" name="startTime">
+			<button class = "btn btn-primary" id="asset-live-button" onclick="fetchAssetLive()">Get live location</button> <br><br>
+
 			</div>
 
-			<br>
-		
-			<div class="input-group">
-			  <span id="asset-label"><strong>End time:</strong></span>
-			  <br>
-			  <input type="datetime-local" id="endTime" name="endTime" onchange="validateTimes()">
-			  <p><span id="time-message"></span></p>
+			<div id="timeline-view">
+
+				<div class="input-group">
+				  <span id="asset-label"><strong>Start time:</strong></span>
+				  <br>
+				  <input type="datetime-local" id="startTime" name="startTime">
+				</div>
+
+				<br>
+			
+				<div class="input-group">
+				  <span id="asset-label"><strong>End time:</strong></span>
+				  <br>
+				  <input type="datetime-local" id="endTime" name="endTime" onchange="validateTimes()">
+				  <p><span id="time-message"></span></p>
+				</div>
+
+				<br> 
+
+				<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetLocations()">Selected asset</button>
+
+				<button class = "btn btn-success" id="fetch-all-asset" onclick="fetchAssetLocationsByTimeInterval()">All assets</button>
+
 			</div>
-
-			<br> 
-
-			<button class = "btn btn-primary" id="submit-button" onclick="fetchAssetLocations()">Selected asset</button>
-
-			<button class = "btn btn-success" id="fetch-all-asset" onclick="fetchAssetLocationsByTimeInterval()">All assets</button>
 
 		</cemter>
 
@@ -150,6 +180,8 @@
 		<center>
 
 			<h4>Asset dashboard</h4>
+
+			<p id="view-header"></p>
 
 			<div id='map' style='width: 600px; height: 550px;'></div>
 
@@ -190,6 +222,7 @@
 	var show; 
 
 	var assetMapping = new Map(); 
+	var header = document.getElementById('view-header');
 
 	// Test JS methods here 
 
@@ -403,13 +436,15 @@
 
 		var Assetid = $('#assetId').val();
 
+		header.innerHTML = 'Fetching ' + Assetid + '\'s live location';
+
 		$.get("{% url 'get_asset_live' %}", {Assetid: Assetid}, 
 
 			function(data) {
 
 				assetLocation = data['assetLocation'];
 
-				var assetMap = data['assetMap']; 
+				let assetMap = data['assetMap']; 
 
 				if (map.getLayer('route')) {
   				map.removeLayer('route');
@@ -443,6 +478,8 @@
 	function fetchNAssets() {
 
 		var noOfAssets = $('#noOfAssets').val();
+
+		header.innerHTML = 'Fetching last known locations for ' + noOfAssets + ' assets';
 
 		$.get("{% url 'get_n_assets' %}", {noOfAssets: noOfAssets}, 
 
@@ -507,54 +544,60 @@
 		var startTime = $('#startTime').val(); 
 		var endTime = $('#endTime').val(); 
 
-		$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
+		if(assetId != null && startTime != '' && endTime != '') {
 
-			function(data) {
+			header.innerHTML = 'Fetching ' + assetId + '\'s locations between selected time interval';
 
-				assetLocations = data['assetLocations']; 
-				let assetMap = data['assetMapping']; 
+			$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
 
-				//delete existing markers on map and empty the array holding those markers
+				function(data) {
 
-				if(currentMarkers!=null){
-					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
-						currentMarkers[i].remove();
-				}
-				currentMarkers=[];
-				currentLatLongs=[];
-				
-				//add markers to map
-				var len_obj = Object.keys(assetLocations).length
-				for(var i=0;i<len_obj;i++){
+					assetLocations = data['assetLocations']; 
+					let assetMap = data['assetMapping']; 
+
+					//delete existing markers on map and empty the array holding those markers
+
+					if(currentMarkers!=null){
+						for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+							currentMarkers[i].remove();
+					}
+					currentMarkers=[];
+					currentLatLongs=[];
 					
-					let assetRegistrationId = assetLocations[i].assetId;
+					//add markers to map
+					var len_obj = Object.keys(assetLocations).length
+					for(var i=0;i<len_obj;i++){
+						
+						let assetRegistrationId = assetLocations[i].assetId;
 
-					 // Add marker to map 
+						 // Add marker to map 
 
-					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
+						let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
 
-					//all the markers are noted
-					
-					currentMarkers.push(marker);
-					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+						//all the markers are noted
+						
+						currentMarkers.push(marker);
+						currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
 
-					
+						
+					}
+					//for fit&zoom all markers to map 
+					var bounds = new mapboxgl.LngLatBounds();
+					if(currentLatLongs.length>1){
+
+						joinMarkers(currentLatLongs);
+		
+						for(var i=0; i<currentLatLongs.length; i++)
+							bounds.extend(currentLatLongs[i]); 
+
+						map.fitBounds(bounds, {padding :50}); 
+					}
+
+					console.log(assetLocations); 
 				}
-				//for fit&zoom all markers to map 
-				var bounds = new mapboxgl.LngLatBounds();
-				if(currentLatLongs.length>1){
+			);
 
-					joinMarkers(currentLatLongs);
-	
-					for(var i=0; i<currentLatLongs.length; i++)
-						bounds.extend(currentLatLongs[i]); 
-
-					map.fitBounds(bounds, {padding :50}); 
-				}
-
-				console.log(assetLocations); 
-			}
-		);
+		}
 	}
 
 	// Method to fetch all the truck details 
@@ -658,56 +701,63 @@
 		let endTime = $('#endTime').val();
 
 		console.log(startTime, endTime); 
+
+		validateTimes(); 
+
+		if(startTime != '' && endTime != '') {
+
+			header.innerHTML = 'Fetching all assets active between selected time interval';
 		
-		$.get("{% url 'get_asset_locations_by_time' %}", {startTime: startTime, endTime: endTime}, 
+			$.get("{% url 'get_asset_locations_by_time' %}", {startTime: startTime, endTime: endTime}, 
 
-			function(data) {
+				function(data) {
 
-				assetMapping = data['assetMapping']; 
-				assetLocations = data['assetLocations'];
+					assetMapping = data['assetMapping']; 
+					assetLocations = data['assetLocations'];
 
-				//delete existing markers on map and empty the array holding those markers
+					//delete existing markers on map and empty the array holding those markers
 
-				if(currentMarkers!=null){
-					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
-						currentMarkers[i].remove();
-				}
+					if(currentMarkers!=null){
+						for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+							currentMarkers[i].remove();
+					}
 
-				currentMarkers=[]
-				currentLatLongs=[]
-				
-				//add markers to map
-
-				var len_obj = Object.keys(assetLocations).length; 
-				
-				for(var i=0;i<len_obj;i++) {
-
-					var assetRegistrationId = assetLocations[i].assetRegistrationId; 
-
-					// Add marker to map 
-
-					let marker = addMarkerToMap(assetMapping, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
-
-					//all the markers are noted
-
-					currentMarkers.push(marker);
-					currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+					currentMarkers=[]
+					currentLatLongs=[]
 					
-				}
+					//add markers to map
 
-				//for fit&zoom all markers to map 
-				
-				if(currentLatLongs.length>1){
-				
-					var bounds = new mapboxgl.LngLatBounds();
-				
-					for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
-						bounds.extend(currentLatLongs[i]); 
+					var len_obj = Object.keys(assetLocations).length; 
+					
+					for(var i=0;i<len_obj;i++) {
 
-					map.fitBounds(bounds, {padding :50});
+						var assetRegistrationId = assetLocations[i].assetRegistrationId; 
+
+						// Add marker to map 
+
+						let marker = addMarkerToMap(assetMapping, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
+
+						//all the markers are noted
+
+						currentMarkers.push(marker);
+						currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
+						
+					}
+
+					//for fit&zoom all markers to map 
+					
+					if(currentLatLongs.length>1){
+					
+						var bounds = new mapboxgl.LngLatBounds();
+					
+						for(var i=0; currentLatLongs.length>0 && i<currentLatLongs.length; i++)
+							bounds.extend(currentLatLongs[i]); 
+
+						map.fitBounds(bounds, {padding :50});
+					}
 				}
-			}
-		); 
+			); 
+		}
 	}
 
 	// Method to get asset locations in the past 24 hours 
@@ -719,6 +769,8 @@
 		let startTime = previousDay(currentDate); 
 
 		console.log(startTime, endTime); 
+
+		header.innerHTML = 'Fetching asset ' + assetId + '\'s locations for the past 24 hrs';
 		
 		$.get("{% url 'get_asset_locations' %}", {assetId: assetId, startTime: startTime, endTime: endTime}, 
 
