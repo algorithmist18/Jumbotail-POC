@@ -16,11 +16,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from dashboard import views 
+from django.views.decorators.csrf import csrf_exempt
 
 urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('', views.homepage, name = 'homepage'),
+    path('getLive', views.get_asset_live, name='get_asset_live'),
     path('assetIds', views.get_asset_IDs, name = 'get_asset_IDs'),
     path('validatetime', views.validate_times, name = 'validate_time'),
     path('fetchlocations', views.get_asset_locations, name = 'get_asset_locations'),
