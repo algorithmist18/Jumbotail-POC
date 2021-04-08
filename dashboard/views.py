@@ -1,21 +1,26 @@
 
 # Import necessary modules
 
+from django.contrib.auth import login, authenticate, logout
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from .models import Position, Asset, Vehicle, Person, Trip
-from .generate_test_data import generate_vehicles, generate_people, generate_positions, generate_trips, generate_trip_positions, end_trips
+from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.models import User
+from .generate_test_data import generate_vehicles, generate_people, generate_positions, generate_trips, generate_trip_positions, end_trips, generate_admins
 #import datetime 
 from django.core import serializers 
 from datetime import datetime,timedelta  #Use this instead of import datetime
 from django.db import connection 
 import json 
+from django.contrib.auth.decorators import login_required 
 from django.core.serializers import serialize
 from math import sin, cos, asin, radians, sqrt
 from django.views.decorators.csrf import csrf_exempt
 
 # Create your views here.
 
+@login_required
 def homepage(request): 
 
 	# Generate new positions
@@ -25,10 +30,70 @@ def homepage(request):
 	generate_people(10)
 	generate_positions(100)
 	"""
-	generate_positions(5) 
+	
+	print('homepage() called') 
 
-	return render(request, 'dashboard_page.html')
+	return render(request, 'dashboard_page.html', {'user': request.user})
 
+
+def login_view(request): 
+
+	print('login() called') 
+
+	if request.method == 'POST':
+
+		# Fetch email and password 
+
+		email = request.POST.get('email').strip()
+		password = request.POST.get('password').strip()
+
+		print(email, password)
+
+		try: 
+
+			# Fetch user and authenticate them 	
+
+			print(User.objects.all())			
+
+			user = User.objects.get(email = email.lower())
+			print(user)
+			username = User.objects.get(email = email.lower()).username
+			passwordUser = User.objects.get(email = email.lower()).password
+
+			# Authenticate and login user 
+
+			if passwordUser == password:
+
+				# Redirect to dashboard
+
+				print('Login successful')
+
+				login(request, user) 
+
+				return redirect('homepage') 
+
+			# Authentication error 
+
+			return render(request, 'login.html', {'error' : 'Username/Password incorrect'})
+
+		except: 
+
+			# Authentication error 
+
+			return render(request, 'login.html', {'error' : 'Username/Password incorrect'})
+	else:
+
+		form = AuthenticationForm()
+
+	return render(request, 'login.html', {'form': form})
+
+
+def logout_view(request): 
+
+	# Method to log a user out and redirect to login page 
+
+	logout(request) 
+	return redirect('login')
 
 def get_n_assets(request): 
 
@@ -514,6 +579,7 @@ def end_trip(request):
 
 # Trip related methods start here 
 
+@login_required
 def trip_view(request): 
 
 	# Method to render trip page 
@@ -532,7 +598,7 @@ def trip_view(request):
 
 		return render(request, 'trip_view.html', {'tripId' : '0'}) 
 
-
+@login_required
 def trips_view(request): 
 
 	# Method to view all trips in a table

@@ -2,6 +2,7 @@
 
 import string, random, datetime
 from .models import Asset, Person, Vehicle, Position, Trip, TripStop
+from django.contrib.auth.models import User
 
 # Global variables for names 
 
@@ -11,6 +12,24 @@ vehicle_name = ['Ford F-150', 'Ford Ranger', 'Ram 1500', 'Nissan Frontier', 'GMC
 companies = ['Tata Motors', 'Ashok Leyland', 'Eicher Motors', 'Nissan', 'Mahindra & Mahindra', 'Asia Motor Works']
 
 # Generate testing data 
+
+def generate_admins(num = 5): 
+
+	for i in range(num): 
+
+		firstname = first_name[random.randint(0, len(first_name) - 1)]
+		lastname = last_name[random.randint(0, len(last_name) - 1)]
+
+		randomnumber = random.randint(10, 99) 
+		username = firstname[:3].lower() + lastname[:3].lower() + str(len(firstname)) + str(randomnumber)
+		email = username + '@gmail.com'
+		password = 'root1234'
+
+		print(email) 
+
+		user = User(first_name = firstname, last_name = lastname, email = email, username = username, password = password) 
+		user.save()
+
 
 def generate_vehicles(num = 10):
 
