@@ -83,6 +83,10 @@
 	  <a class="navbar-brand" style="font-size: 12px; margin-right: 10px;" href="logout">Logout</a>
 	</nav>
 
+	<!--turf-->
+	<script src='https://unpkg.com/@turf/turf@6.3.0/turf.min.js'></script>
+
+
 	<div id="form-container">
 		
 		<cemter>
@@ -110,7 +114,7 @@
 			<div class="input-group">
 			  <span id="asset-label"><strong>Asset ID:</strong></span>
 			  <br>
-			  <select class="custom-select" name="assetId" id="assetId">
+			  <select class="custom-select" name="assetId" id="assetId" onchange="fetchAssetLive()">
 			  </select>
 			</div>
 
@@ -368,6 +372,72 @@
 
 	}
 
+	function joinMarkers(currentLatLongs){
+						
+		var linestring = turf.lineString(currentLatLongs);
+		if (map.getLayer('route')) {
+  			map.removeLayer('route');
+		}
+		if (map.getSource('route')) {
+ 			map.removeSource('route');
+		}
+    	map.addLayer({
+        	"id": "route",
+        	"type": "line",
+        	"source": {
+            "type": "geojson",
+            "data": linestring
+        	},
+        	'layout': {
+				'line-join': 'round',
+				'line-cap': 'round'
+			},
+			'paint': {
+				'line-color': '#BF93E4',
+				'line-width': 5
+			}
+		});
+	}
+
+	function fetchAssetLive(){
+
+		var Assetid = $('#assetId').val();
+
+		$.get("{% url 'get_asset_live' %}", {Assetid: Assetid}, 
+
+			function(data) {
+
+				assetLocation = data['assetLocation'];
+
+				var assetMap = data['assetMap']; 
+
+				if (map.getLayer('route')) {
+  				map.removeLayer('route');
+				}
+				if (map.getSource('route')) {
+ 				map.removeSource('route');
+				}
+
+				if(currentMarkers!=null){
+					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+						currentMarkers[i].remove();
+				}
+				currentMarkers=[]
+				currentLatLongs=[]
+
+				
+				
+	
+				var assetRegistrationId = assetLocation[0].assetRegistrationId; 
+				let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocation[0].longitude, assetLocation[0].latitude); 
+				currentMarkers.push(marker);
+				currentLatLongs.push([assetLocation[0].longitude, assetLocation[0].latitude]);
+				console.log(assetLocation); 
+			}
+		);
+
+
+	}
 	// Fetch N assets 
 
 	function fetchNAssets() {
@@ -382,7 +452,14 @@
 
 				var assetMap = data['assetMap']; 
 
-				//delete existing markers on map and empty the array holding those markers
+				//delete existing markers on map and empty the array holding those markers and clear routes
+				if (map.getLayer('route')) {
+  				map.removeLayer('route');
+				}
+				if (map.getSource('route')) {
+ 				map.removeSource('route');
+				}
+
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
@@ -438,6 +515,7 @@
 				let assetMap = data['assetMapping']; 
 
 				//delete existing markers on map and empty the array holding those markers
+
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
@@ -465,6 +543,9 @@
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
 				if(currentLatLongs.length>1){
+
+					joinMarkers(currentLatLongs);
+	
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
@@ -675,6 +756,7 @@
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
 				if(currentLatLongs.length>1){
+					joinMarkers(currentLatLongs);
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
