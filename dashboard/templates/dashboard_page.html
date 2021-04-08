@@ -403,12 +403,21 @@
 
 				var assetMap = data['assetMap']; 
 
+				if (map.getLayer('route')) {
+  				map.removeLayer('route');
+				}
+				if (map.getSource('route')) {
+ 				map.removeSource('route');
+				}
+
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
 				}
 				currentMarkers=[]
 				currentLatLongs=[]
+
+				
 				
 	
 				var assetRegistrationId = assetLocation[0].assetRegistrationId; 
@@ -435,7 +444,14 @@
 
 				var assetMap = data['assetMap']; 
 
-				//delete existing markers on map and empty the array holding those markers
+				//delete existing markers on map and empty the array holding those markers and clear routes
+				if (map.getLayer('route')) {
+  				map.removeLayer('route');
+				}
+				if (map.getSource('route')) {
+ 				map.removeSource('route');
+				}
+
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
@@ -491,6 +507,7 @@
 				let assetMap = data['assetMapping']; 
 
 				//delete existing markers on map and empty the array holding those markers
+
 				if(currentMarkers!=null){
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
