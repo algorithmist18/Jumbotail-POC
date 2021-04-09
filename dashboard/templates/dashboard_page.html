@@ -405,15 +405,11 @@
 
 	}
 
-	function joinMarkers(currentLatLongs){
+	//function to join markers after we obtain route from getRoute function
+	function joinMarkers(route_data){
 						
-		var linestring = turf.lineString(currentLatLongs);
-		if (map.getLayer('route')) {
-  			map.removeLayer('route');
-		}
-		if (map.getSource('route')) {
- 			map.removeSource('route');
-		}
+		var linestring = turf.lineString(route_data);
+
     	map.addLayer({
         	"id": "route",
         	"type": "line",
@@ -431,6 +427,48 @@
 			}
 		});
 	}
+
+	//function to get route after markers are given
+	function getRoute(currentLatLongs) {
+
+		var latlonglength = currentLatLongs.length
+		var coordinates = ''
+		for(var i=0 ;i < latlonglength ; i++){
+			coordinates += currentLatLongs[i][0] + ',' + currentLatLongs[i][1]
+			if(i < latlonglength-1)
+			coordinates += ';'
+		}
+		
+  		var url = 'https://api.mapbox.com/directions/v5/mapbox/cycling/' + coordinates + '?steps=true&geometries=geojson&access_token=' + 'pk.eyJ1IjoibmlzaGFudGg5OCIsImEiOiJja2x1ejBtbzIwaTVjMm5uNnRnczdkNWYzIn0.2FHYECnHm5VyvCpCKJ-01w';
+
+		if (map.getLayer('route')) {
+  			map.removeLayer('route');
+		}
+		if (map.getSource('route')) {
+ 			map.removeSource('route');
+		}
+
+		//request route data using api
+  		var req = new XMLHttpRequest();
+  		req.open('GET', url, true);
+  		req.onload = function() {
+    		var json = JSON.parse(req.response);
+    		var data = json.routes[0];
+    		var route = data.geometry.coordinates;
+    		var geojson = {
+      			type: 'Feature',
+      			properties: {},
+      			geometry: {
+        		type: 'LineString',
+        		coordinates: route
+      			}
+    		};
+			//call joinMarkers function once route is obtained
+			joinMarkers(route);
+  		};
+  		req.send();
+	}
+
 
 	function fetchAssetLive(){
 
@@ -585,7 +623,7 @@
 					var bounds = new mapboxgl.LngLatBounds();
 					if(currentLatLongs.length>1){
 
-						joinMarkers(currentLatLongs);
+						getRoute(currentLatLongs);
 		
 						for(var i=0; i<currentLatLongs.length; i++)
 							bounds.extend(currentLatLongs[i]); 
@@ -808,7 +846,7 @@
 				//for fit&zoom all markers to map 
 				var bounds = new mapboxgl.LngLatBounds();
 				if(currentLatLongs.length>1){
-					joinMarkers(currentLatLongs);
+					getRoute(currentLatLongs);
 					for(var i=0; i<currentLatLongs.length; i++)
 						bounds.extend(currentLatLongs[i]); 
 
