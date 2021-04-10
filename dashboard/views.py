@@ -449,24 +449,34 @@ def get_asset_locations_by_time_filter(request):
 
 		# Fetch all assets which fit the constraint 
 
+		positions = list(Position.objects.all().filter(time__gt = startTime, time__lt = endTime).values()) 
+		locations = {}
+
+		for position in positions: 
+
+			assetId = position['assetId']
+			locations.update({assetId: position})
+
+
 		assets = list(Asset.objects.all().filter(time__gt = startTime, time__lt = endTime).order_by('-time').values()) 
 
-		for i in range(len(assets)): 
+		for i in range(len(positions)): 
 
-			if assets[i]['assetRegistrationId'].startswith('PER'): 
+			if positions[i]['assetId'].startswith('PER'): 
 
-				person = list(Person.objects.filter(personId = assets[i]['assetRegistrationId']).values())
-				assetMapping[assets[i]['assetRegistrationId']] = person[0]
+				person = list(Person.objects.filter(personId = positions[i]['assetId']).values())
+				assetMapping[positions[i]['assetId']] = person[0]
 
 			else: 
 
-				vehicle = list(Vehicle.objects.filter(vehicleId = assets[i]['assetRegistrationId']).values()) 
-				assetMapping[assets[i]['assetRegistrationId']] = vehicle[0]
+				vehicle = list(Vehicle.objects.filter(vehicleId = positions[i]['assetId']).values()) 
+				assetMapping[positions[i]['assetId']] = vehicle[0]
 
 		# Update response 
 
 		response['assetLocations'] = assets 
 		response['assetMapping'] = assetMapping 
+		response['lastActiveLocations'] = locations
 
 		return JsonResponse(response) 
 

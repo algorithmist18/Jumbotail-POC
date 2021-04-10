@@ -495,22 +495,24 @@
 					for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
 						currentMarkers[i].remove();
 				}
+
 				currentMarkers=[]
 				currentLatLongs=[]
 
-				
-				
-	
-				var assetRegistrationId = assetLocation[0].assetRegistrationId; 
-				let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocation[0].longitude, assetLocation[0].latitude); 
-				currentMarkers.push(marker);
-				currentLatLongs.push([assetLocation[0].longitude, assetLocation[0].latitude]);
-				console.log(assetLocation); 
+				if(assetLocation != null && assetLocation[0] != null) {
+
+					var assetRegistrationId = assetLocation[0].assetRegistrationId; 
+					let marker = addMarkerToMap(assetMap, assetRegistrationId, assetLocation[0].longitude, assetLocation[0].latitude); 
+					currentMarkers.push(marker);
+					currentLatLongs.push([assetLocation[0].longitude, assetLocation[0].latitude]);
+					console.log(assetLocation);
+				} 
 			}
 		);
 
 
 	}
+
 	// Fetch N assets 
 
 	function fetchNAssets() {
@@ -753,11 +755,17 @@
 					assetMapping = data['assetMapping']; 
 					assetLocations = data['assetLocations'];
 
+					let lastActiveLocations = data['lastActiveLocations']; 
+
 					//delete existing markers on map and empty the array holding those markers
 
-					if(currentMarkers!=null){
-						for(var i=currentMarkers.length-1 ; i>=0 ; i-- )
+					if(currentMarkers != null) {
+					
+						for(var i=currentMarkers.length-1 ; i>=0 ; i-- ) {
+
 							currentMarkers[i].remove();
+
+						}
 					}
 
 					currentMarkers=[]
@@ -766,20 +774,21 @@
 					//add markers to map
 
 					var len_obj = Object.keys(assetLocations).length; 
-					
-					for(var i=0;i<len_obj;i++) {
+					let noOfActiveLocations = Object.keys(lastActiveLocations).length; 
 
-						var assetRegistrationId = assetLocations[i].assetRegistrationId; 
+					console.log(len_obj, noOfActiveLocations); 
+
+					for(var assetId in lastActiveLocations) {
 
 						// Add marker to map 
 
-						let marker = addMarkerToMap(assetMapping, assetRegistrationId, assetLocations[i].longitude, assetLocations[i].latitude); 
+						let marker = addMarkerToMap(assetMapping, assetId, 
+						lastActiveLocations[assetId].longitude, lastActiveLocations[assetId].latitude);
 
-						//all the markers are noted
+						// All the markers are noted 
 
-						currentMarkers.push(marker);
-						currentLatLongs.push([assetLocations[i].longitude, assetLocations[i].latitude]);
-						
+						currentMarkers.push(marker); 
+						currentLatLongs.push([lastActiveLocations[assetId].longitude, lastActiveLocations[assetId].latitude]); 
 					}
 
 					//for fit&zoom all markers to map 
