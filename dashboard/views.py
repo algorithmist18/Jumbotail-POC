@@ -23,15 +23,6 @@ from django.views.decorators.csrf import csrf_exempt
 @login_required
 def homepage(request): 
 
-	# Generate new positions
-
-	"""
-	generate_vehicles(10)
-	generate_people(10)
-	generate_positions(100)
-	"""
-	#generate_positions(5) 
-
 	return render(request, 'dashboard_page.html', {'user': request.user})
 
 def get_asset_live(request):

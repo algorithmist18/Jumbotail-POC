@@ -111,6 +111,8 @@ def generate_positions(num = 100):
 
 			asset = Asset.objects.filter(assetRegistrationId = vehicle.vehicleId)[0]
 
+			print(vehicle.vehicleId)
+
 		else: 
 
 			# Fetch a person
@@ -126,6 +128,8 @@ def generate_positions(num = 100):
 			# Update asset position 
 
 			asset = Asset.objects.get(assetRegistrationId = person.personId) 
+
+			print(person.personId)
 
 
 		# Update latest location 
