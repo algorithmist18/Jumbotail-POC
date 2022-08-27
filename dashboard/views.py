@@ -67,7 +67,6 @@ def login_view(request):
 	if request.method == 'POST':
 
 		# Fetch email and password 
-
 		email = request.POST.get('email').strip()
 		password = request.POST.get('password').strip()
 
@@ -76,34 +75,28 @@ def login_view(request):
 		try: 
 
 			# Fetch user and authenticate them 	
-
 			print(User.objects.all())			
-
+			for user in User.objects.all():
+				print(user.email) 
+				
 			user = User.objects.get(email = email.lower())
 			print(user)
 			username = User.objects.get(email = email.lower()).username
 			passwordUser = User.objects.get(email = email.lower()).password
 
 			# Authenticate and login user 
-
 			if passwordUser == password:
 
 				# Redirect to dashboard
-
-				print('Login successful')
-
 				login(request, user) 
-
 				return redirect('homepage') 
 
 			# Authentication error 
-
 			return render(request, 'login.html', {'error' : 'Username/Password incorrect'})
 
 		except: 
 
 			# Authentication error 
-
 			return render(request, 'login.html', {'error' : 'Username/Password incorrect'})
 	else:
 
@@ -115,14 +108,12 @@ def login_view(request):
 def logout_view(request): 
 
 	# Method to log a user out and redirect to login page 
-
 	logout(request) 
 	return redirect('login')
 
 def get_n_assets(request): 
 
 	# Method to fetch list of positions for N assets
-
 	assetMapping = {} 
 
 	if request.method == 'GET':
